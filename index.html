@@ -164,6 +164,9 @@ svg.ico.lg{width:34px; height:34px; stroke-width:1.6;}
   border-bottom:1px solid var(--rule); font-size:.92rem; font-weight:600;
 }
 .more-item:last-child{border-bottom:none;}
+.more-item-col{flex-direction:column; align-items:stretch; gap:8px;}
+.more-item-col input{margin-top:2px;}
+.hint{margin:0; font-size:.74rem; color:var(--ink-soft); line-height:1.4; font-weight:400;}
 .more-item button.item-btn{all:unset; display:flex; justify-content:space-between; align-items:center; width:100%; cursor:pointer; color:var(--ink);}
 .more-item .chev{color:var(--ink-soft);}
 
@@ -339,6 +342,13 @@ input[type=file]{display:none;}
   <div class="topbar"><h1>Más</h1><span class="spacer"></span></div>
   <div class="more-group">
     <div class="more-item"><span>Modo oscuro</span><label class="switch"><input type="checkbox" id="darkToggle"><span class="track"></span></label></div>
+  </div>
+  <div class="more-group">
+    <div class="more-item more-item-col">
+      <span>Saldo inicial</span>
+      <input class="nums" id="initialBalanceInput" inputmode="decimal" placeholder="0,00">
+      <p class="hint">El saldo que tenías antes de tu primer movimiento registrado. Se suma al total, pero no cuenta como ingreso ni gasto ni entra en las estadísticas.</p>
+    </div>
   </div>
   <div class="more-group">
     <div class="more-item"><button class="item-btn" id="openCats">Gestionar categorías <span class="chev">›</span></button></div>
@@ -551,6 +561,7 @@ const K_MOV = 'cuentas.movimientos.v1';
 const K_CAT = 'libreta.categorias.v2';
 const K_BUD = 'libreta.presupuestos.v1';
 const K_THEME = 'libreta.theme.v1';
+const K_INITIAL = 'libreta.saldoinicial.v1';
 
 function load(key, fallback){
   try{ const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
@@ -582,6 +593,7 @@ function defaultCategorias(){
 let movimientos = load(K_MOV, []);
 let categorias = load(K_CAT, defaultCategorias());
 let presupuestos = load(K_BUD, []);
+let saldoInicial = parseFloat(localStorage.getItem(K_INITIAL)) || 0;
 let viewDate = new Date(); viewDate.setDate(1);
 let editingId = null;
 let currentType = 'in';
@@ -607,6 +619,17 @@ document.getElementById('darkToggle').addEventListener('change', (e)=>{
   theme = e.target.checked ? 'dark' : 'light';
   localStorage.setItem(K_THEME, theme);
   applyTheme(theme);
+});
+
+/* ============ SALDO INICIAL ============ */
+const initialBalanceInput = document.getElementById('initialBalanceInput');
+initialBalanceInput.value = saldoInicial ? String(saldoInicial).replace('.', ',') : '';
+initialBalanceInput.addEventListener('change', ()=>{
+  const v = parseFloat(initialBalanceInput.value.replace(',', '.'));
+  saldoInicial = isNaN(v) ? 0 : v;
+  localStorage.setItem(K_INITIAL, saldoInicial);
+  renderInicio();
+  toast('Saldo inicial guardado');
 });
 
 /* ============ TAB BAR ICONS ============ */
@@ -647,7 +670,7 @@ function renderInicio(){
   const now = new Date();
   const {y, m} = monthRange(now);
   const monthEntries = movimientos.filter(e=> isInMonth(e.date, y, m));
-  const totalBalance = movimientos.reduce((s,e)=> s + (e.type==='in'?e.amount:-e.amount), 0);
+  const totalBalance = saldoInicial + movimientos.reduce((s,e)=> s + (e.type==='in'?e.amount:-e.amount), 0);
   const monthIn = monthEntries.filter(e=>e.type==='in').reduce((s,e)=>s+e.amount,0);
   const monthOut = monthEntries.filter(e=>e.type==='out').reduce((s,e)=>s+e.amount,0);
 
@@ -661,7 +684,7 @@ function renderInicio(){
   for(let i=5;i>=0;i--){
     const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
     const cutoff = new Date(d.getFullYear(), d.getMonth()+1, 0);
-    const bal = movimientos.filter(e=> new Date(e.date+'T00:00:00') <= cutoff)
+    const bal = saldoInicial + movimientos.filter(e=> new Date(e.date+'T00:00:00') <= cutoff)
       .reduce((s,e)=> s + (e.type==='in'?e.amount:-e.amount), 0);
     points.push({d, bal});
   }
