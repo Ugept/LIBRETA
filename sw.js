@@ -1,4 +1,4 @@
-const CACHE = 'libreta-v11';
+const CACHE = 'libreta-v12';
 const ASSETS = [
   './index.html',
   './manifest.json',

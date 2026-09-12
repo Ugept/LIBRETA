@@ -939,7 +939,7 @@ document.getElementById('bulkCatCancel').addEventListener('click', ()=> bulkCatO
 bulkCatOverlay.addEventListener('click', (e)=>{ if(e.target===bulkCatOverlay) bulkCatOverlay.classList.remove('open'); });
 document.getElementById('bulkCatConfirm').addEventListener('click', ()=>{
   const cat = document.getElementById('bulkCatSelect').value;
-  movimientos.forEach(m=>{ if(selectedIds.has(m.id)) m.category = cat; });
+  movimientos.forEach(m=>{ if(selectedIds.has(m.id)){ m.category = cat; learnConcept(m.type, m.desc, cat); } });
   save(K_MOV, movimientos);
   bulkCatOverlay.classList.remove('open');
   const n = selectedIds.size;
@@ -1082,6 +1082,7 @@ document.getElementById('saveBtn').addEventListener('click', ()=>{
     movimientos.push({ id:uid(), type:currentType, amount, desc, category, date, created:Date.now() });
   }
   save(K_MOV, movimientos);
+  learnConcept(currentType, desc, category);
   closeEntrySheet();
   viewDate = new Date(date+'T00:00:00'); viewDate.setDate(1);
   renderInicio(); renderMovimientos(); renderBudgets();
@@ -1420,16 +1421,33 @@ const K_CONCEPT_MAP = 'libreta.conceptmap.v1';
 let conceptMap = load(K_CONCEPT_MAP, {});
 const conceptOverlay = document.getElementById('conceptOverlay');
 
-function conceptKey(type, desc){ return type + '|' + (desc||'').trim().toLowerCase(); }
+const CONCEPT_STOPWORDS = ['compra','pago','recibo','transferencia','bizum','tarjeta','tarj','adeudo','cargo','abono','traspaso','de','del','la','el','en','a','favor','concepto','operacion','movimiento'];
+function conceptSignature(desc){
+  const words = (desc||'').toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9\s]/g,' ')
+    .split(/\s+/)
+    .filter(w=> w && !CONCEPT_STOPWORDS.includes(w) && !/^\d+$/.test(w));
+  const sig = words.slice(0,2).join(' ');
+  return sig || (desc||'').trim().toLowerCase();
+}
+function conceptKey(type, desc){ return type + '|' + conceptSignature(desc); }
+function learnConcept(type, desc, category){
+  if(!(desc||'').trim()) return;
+  conceptMap[conceptKey(type, desc)] = category;
+  save(K_CONCEPT_MAP, conceptMap);
+}
 
 function buildConceptGroups(){
   const map = {};
   movimientos.forEach(e=>{
     const d = (e.desc||'').trim();
     if(!d) return;
-    const key = conceptKey(e.type, d);
-    if(!map[key]) map[key] = { type:e.type, desc:d, items:[], cats:new Set() };
+    const sig = conceptSignature(d);
+    const key = e.type + '|' + sig;
+    if(!map[key]) map[key] = { type:e.type, sig, items:[], variants:new Set(), cats:new Set() };
     map[key].items.push(e);
+    map[key].variants.add(d);
     map[key].cats.add(e.category);
   });
   return Object.values(map).filter(g=>g.items.length>=2).sort((a,b)=> b.items.length - a.items.length);
@@ -1438,18 +1456,23 @@ function renderConceptGroups(){
   const wrap = document.getElementById('conceptList');
   const groups = buildConceptGroups();
   if(groups.length===0){
-    wrap.innerHTML = '<div class="empty">Aún no hay conceptos repetidos. Aparecerán aquí en cuanto tengas dos o más movimientos con el mismo texto.</div>';
+    wrap.innerHTML = '<div class="empty">Aún no hay conceptos repetidos. Aparecerán aquí en cuanto tengas dos o más movimientos con un texto parecido.</div>';
     return;
   }
   wrap.innerHTML = '';
   groups.forEach(g=>{
     const catNames = categorias[g.type] || [];
     const currentCat = g.cats.size===1 ? [...g.cats][0] : null;
+    const variantsList = [...g.variants];
+    const variantsText = variantsList.length>1
+      ? 'Incluye: ' + variantsList.slice(0,4).map(v=>escapeHtml(v)).join(', ') + (variantsList.length>4 ? '…' : '')
+      : '';
     const row = document.createElement('div');
     row.className = 'concept-row';
     row.innerHTML = `
-      <div class="cr-top"><span class="cr-name">${escapeHtml(g.desc)}</span><span class="cr-count">${g.items.length} mov.</span></div>
+      <div class="cr-top"><span class="cr-name">${escapeHtml(g.sig)}</span><span class="cr-count">${g.items.length} mov.</span></div>
       <div class="cr-current">${currentCat ? 'Ahora: '+escapeHtml(currentCat) : 'Categorías mezcladas actualmente'} · ${g.type==='in'?'ingreso':'gasto'}</div>
+      ${variantsText ? `<div class="cr-current" style="margin-top:-6px;">${variantsText}</div>` : ''}
       <div class="cr-row">
         <select class="cr-select">${catNames.map(c=>`<option value="${escapeHtml(c.name)}" ${c.name===currentCat?'selected':''}>${escapeHtml(c.name)}</option>`).join('')}</select>
         <button class="cr-apply">Aplicar a los ${g.items.length}</button>
@@ -1458,7 +1481,7 @@ function renderConceptGroups(){
     row.querySelector('.cr-apply').addEventListener('click', ()=>{
       const chosen = row.querySelector('.cr-select').value;
       g.items.forEach(item=> item.category = chosen);
-      conceptMap[conceptKey(g.type, g.desc)] = chosen;
+      conceptMap[g.type + '|' + g.sig] = chosen;
       save(K_MOV, movimientos);
       save(K_CONCEPT_MAP, conceptMap);
       renderInicio(); renderMovimientos(); renderBudgets();
