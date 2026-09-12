@@ -241,12 +241,14 @@ body{ padding-bottom:calc(96px + env(safe-area-inset-bottom)); }
   display:none; align-items:center; justify-content:center; z-index:35;
 }
 .fab.show{display:flex;}
+.fab svg.ico{width:24px; height:24px; stroke:#fff;}
 .calc-fab{
   position:fixed; left:20px; bottom:calc(96px + env(safe-area-inset-bottom));
   width:50px; height:50px; border-radius:50%; background:var(--card); color:var(--ink);
   border:1px solid var(--rule); font-size:1.3rem; box-shadow:0 6px 16px var(--shadow); cursor:pointer;
   display:flex; align-items:center; justify-content:center; z-index:35;
 }
+.calc-fab svg.ico{width:22px; height:22px; stroke:var(--ink);}
 
 /* ---- sheets ---- */
 .sheet-overlay{
@@ -373,14 +375,14 @@ input[type=file]{display:none;}
 <input type="file" id="importFile" accept="application/json">
 
 <nav class="tabbar">
-  <button class="tab-btn active" data-tab="inicio" data-ic="home">Libreta</button>
-  <button class="tab-btn" data-tab="movimientos" data-ic="list">Movimientos</button>
-  <button class="tab-btn" data-tab="presupuestos" data-ic="target">Presupuestos</button>
-  <button class="tab-btn" data-tab="mas" data-ic="dots">Más</button>
+  <button class="tab-btn active" data-tab="inicio" data-ic="piggy-bank">Libreta</button>
+  <button class="tab-btn" data-tab="movimientos" data-ic="arrow-right-left">Movimientos</button>
+  <button class="tab-btn" data-tab="presupuestos" data-ic="sprout">Presupuestos</button>
+  <button class="tab-btn" data-tab="mas" data-ic="square-plus">Más</button>
 </nav>
 
-<button class="fab" id="addBtn">+</button>
-<button class="calc-fab" id="calcFab">🧮</button>
+<button class="fab" id="addBtn"></button>
+<button class="calc-fab" id="calcFab"></button>
 
 <div class="sheet-overlay" id="entryOverlay">
   <div class="sheet">
@@ -462,6 +464,9 @@ input[type=file]{display:none;}
     <div class="color-picker" id="newCatColorPicker"></div>
     <div class="sheet-actions">
       <button class="btn primary" id="addCatBtn">Añadir categoría</button>
+    </div>
+    <div class="sheet-actions" id="cancelCatEdit" style="display:none;">
+      <button class="btn ghost" id="cancelCatEditBtn">Cancelar edición</button>
     </div>
     <div class="sheet-actions">
       <button class="btn ghost" id="closeCatManage">Cerrar</button>
@@ -553,30 +558,36 @@ input[type=file]{display:none;}
 <div id="toast"></div>
 
 <script>
-/* ============ ICONOS SVG ============ */
+/* ============ ICONOS SVG (Lucide, verificados contra su código fuente) ============ */
 const ICON_PATHS = {
-  home: '<path d="M3 11l9-7 9 7"/><path d="M5 10v9a1 1 0 0 0 1 1h3v-6h6v6h3a1 1 0 0 0 1-1v-9"/>',
-  cart: '<path d="M3 4h2l2.4 12.4a2 2 0 0 0 2 1.6h7.2a2 2 0 0 0 2-1.6L21 8H6"/><circle cx="9" cy="20" r="1.4"/><circle cx="17" cy="20" r="1.4"/>',
-  car: '<path d="M3 13l2-5a2 2 0 0 1 2-1h10a2 2 0 0 1 2 1l2 5v5a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-1H6v1a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-5z"/><circle cx="7.5" cy="16" r="1.4"/><circle cx="16.5" cy="16" r="1.4"/>',
-  gamepad: '<rect x="4" y="8" width="16" height="9" rx="4"/><path d="M8 11v3M6.5 12.5h3"/><circle cx="15.5" cy="11.2" r=".9"/><circle cx="17.5" cy="13.2" r=".9"/>',
-  heart: '<path d="M12 20s-7-4.35-9.5-8.5C.9 8 2.4 4.6 5.8 4.6c2 0 3.4 1.2 4.4 2.6 1-1.4 2.4-2.6 4.4-2.6 3.4 0 4.9 3.4 3.3 6.9C19 15.65 12 20 12 20z"/>',
-  bag: '<path d="M6 8h12l1 12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>',
-  repeat: '<path d="M4 8a8 8 0 0 1 14-4.9M18 3v4h-4"/><path d="M20 16a8 8 0 0 1-14 4.9M6 21v-4h4"/>',
-  briefcase: '<rect x="3" y="8" width="18" height="11" rx="1.5"/><path d="M8 8V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 13h18"/>',
-  tag: '<path d="M3 11V5a1 1 0 0 1 1-1h6l11 11-7 7L3 11z"/><circle cx="7.5" cy="7.5" r="1.3"/>',
-  gift: '<rect x="4" y="9" width="16" height="11"/><rect x="2" y="6" width="20" height="4"/><path d="M12 6v14"/><path d="M12 6c-1.5-3.2-5.3-4-5.3-1.3S9 6 12 6zm0 0c1.5-3.2 5.3-4 5.3-1.3S15 6 12 6z"/>',
-  wallet: '<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/><circle cx="17" cy="14.2" r="1.1"/>',
-  dots: '<circle cx="6" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="18" cy="12" r="1.5"/>',
-  plus: '<path d="M12 5v14M5 12h14"/>',
-  list: '<path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1.2"/><circle cx="3.5" cy="12" r="1.2"/><circle cx="3.5" cy="18" r="1.2"/>',
-  target: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4"/>'
+  'piggy-bank': '<path d="M11 17h3v2a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-3a3.16 3.16 0 0 0 2-2h1a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1h-1a5 5 0 0 0-2-4V3a4 4 0 0 0-3.2 1.6l-.3.4H11a6 6 0 0 0-6 6v1a5 5 0 0 0 2 4v3a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1z"/><path d="M16 10h.01"/><path d="M2 8v1a2 2 0 0 0 2 2h1"/>',
+  'arrow-right-left': '<path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/>',
+  'sprout': '<path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/>',
+  'square-plus': '<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M8 12h8"/><path d="M12 8v8"/>',
+  'calculator': '<rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/>',
+  'wallet': '<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',
+  'home': '<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>',
+  'utensils': '<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>',
+  'shopping-cart': '<circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>',
+  'shopping-bag': '<path d="M16 10a4 4 0 0 1-8 0"/><path d="M3.103 6.034h17.794"/><path d="M3.4 5.467a2 2 0 0 0-.4 1.2V20a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6.667a2 2 0 0 0-.4-1.2l-2-2.667A2 2 0 0 0 17 2H7a2 2 0 0 0-1.6.8z"/>',
+  'car-front': '<path d="m21 8-2 2-1.5-3.7A2 2 0 0 0 15.646 5H8.4a2 2 0 0 0-1.903 1.257L5 10 3 8"/><path d="M7 14h.01"/><path d="M17 14h.01"/><rect width="18" height="8" x="3" y="10" rx="2"/><path d="M5 18v2"/><path d="M19 18v2"/>',
+  'heart': '<path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/>',
+  'shirt': '<path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/>',
+  'gift': '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/>',
+  'heart-handshake': '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/><path d="M12 5 9.04 7.96a2.17 2.17 0 0 0 0 3.08c.82.82 2.13.85 3 .07l2.07-1.9a2.82 2.82 0 0 1 3.79 0l2.96 2.66"/><path d="m18 15-2-2"/><path d="m15 18-2-2"/>',
+  'briefcase': '<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/>',
+  'credit-card': '<rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>',
+  'repeat': '<path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/>',
+  'more-horizontal': '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
+  'gamepad-2': '<rect x="4" y="8" width="16" height="9" rx="4"/><path d="M8 11v3M6.5 12.5h3"/><circle cx="15.5" cy="11.2" r=".9"/><circle cx="17.5" cy="13.2" r=".9"/>'
 };
 function renderIcon(key, extraClass){
-  const p = ICON_PATHS[key] || ICON_PATHS.dots;
+  const p = ICON_PATHS[key] || ICON_PATHS['more-horizontal'];
   return `<svg class="ico ${extraClass||''}" viewBox="0 0 24 24">${p}</svg>`;
 }
-const ICON_KEYS = ['home','cart','car','gamepad','heart','bag','repeat','briefcase','tag','gift','wallet','dots','plus'];
+const ICON_KEYS = ['home','utensils','shopping-cart','shopping-bag','car-front','gamepad-2','heart','shirt','gift','heart-handshake','briefcase','credit-card','repeat','more-horizontal'];
 const COLOR_PALETTE = ['#F0D9CE','#DDEFE3','#DCE7F5','#EDE3F5','#F5EBD0','#F5D9DC','#E7DFD2'];
+
 
 /* ============ ESTADO Y PERSISTENCIA ============ */
 const K_MOV = 'cuentas.movimientos.v1';
@@ -599,21 +610,38 @@ function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s; 
 function defaultCategorias(){
   return {
     in: [
-      {name:'Nómina', icon:'briefcase', color:'#DCE7F5'}, {name:'Ventas', icon:'tag', color:'#F5EBD0'},
-      {name:'Regalo', icon:'gift', color:'#EDE3F5'}, {name:'Reembolso', icon:'wallet', color:'#DDEFE3'},
-      {name:'Otro ingreso', icon:'plus', color:'#F0D9CE'}
+      {name:'Nómina', icon:'briefcase', color:'#DCE7F5'}, {name:'Ventas', icon:'shopping-bag', color:'#F5EBD0'},
+      {name:'Regalo', icon:'gift', color:'#EDE3F5'}, {name:'Reembolso', icon:'credit-card', color:'#DDEFE3'},
+      {name:'Otro ingreso', icon:'more-horizontal', color:'#F0D9CE', other:true}
     ],
     out: [
-      {name:'Vivienda', icon:'home', color:'#F0D9CE'}, {name:'Alimentación', icon:'cart', color:'#DDEFE3'},
-      {name:'Transporte', icon:'car', color:'#DCE7F5'}, {name:'Ocio', icon:'gamepad', color:'#EDE3F5'},
-      {name:'Salud', icon:'heart', color:'#F5D9DC'}, {name:'Compras', icon:'bag', color:'#F5EBD0'},
-      {name:'Suscripciones', icon:'repeat', color:'#DCE7F5'}, {name:'Otro gasto', icon:'dots', color:'#E7DFD2'}
+      {name:'Vivienda', icon:'home', color:'#F0D9CE'}, {name:'Alimentación', icon:'utensils', color:'#DDEFE3'},
+      {name:'Transporte', icon:'car-front', color:'#DCE7F5'}, {name:'Ocio', icon:'gamepad-2', color:'#EDE3F5'},
+      {name:'Salud', icon:'heart', color:'#F5D9DC'}, {name:'Compras', icon:'shopping-bag', color:'#F5EBD0'},
+      {name:'Ropa', icon:'shirt', color:'#DCE7F5'}, {name:'Donativos', icon:'heart-handshake', color:'#F5D9DC'},
+      {name:'Suscripciones', icon:'repeat', color:'#EDE3F5'}, {name:'Otro gasto', icon:'more-horizontal', color:'#E7DFD2', other:true}
     ]
   };
+}
+function sortedCats(type){
+  return [...categorias[type]].sort((a,b)=> (a.other?1:0) - (b.other?1:0));
+}
+function migrateCategorias(){
+  const iconMap = {home:'home', cart:'shopping-cart', car:'car-front', gamepad:'gamepad-2', heart:'heart',
+    bag:'shopping-bag', repeat:'repeat', briefcase:'briefcase', tag:'shopping-bag', gift:'gift',
+    wallet:'credit-card', dots:'more-horizontal', plus:'more-horizontal'};
+  ['in','out'].forEach(type=>{
+    categorias[type].forEach(c=>{
+      if(iconMap[c.icon]) c.icon = iconMap[c.icon];
+      if((c.name==='Otro gasto' || c.name==='Otro ingreso') && c.other===undefined) c.other = true;
+    });
+  });
+  save(K_CAT, categorias);
 }
 
 let movimientos = load(K_MOV, []);
 let categorias = load(K_CAT, defaultCategorias());
+migrateCategorias();
 let presupuestos = load(K_BUD, []);
 let saldoInicial = parseFloat(localStorage.getItem(K_INITIAL)) || 0;
 let viewDate = new Date(); viewDate.setDate(1);
@@ -658,6 +686,8 @@ initialBalanceInput.addEventListener('change', ()=>{
 document.querySelectorAll('.tab-btn').forEach(b=>{
   b.insertAdjacentHTML('afterbegin', renderIcon(b.dataset.ic));
 });
+document.getElementById('addBtn').innerHTML = renderIcon('wallet');
+document.getElementById('calcFab').innerHTML = renderIcon('calculator');
 document.querySelectorAll('.tabbar button').forEach(btn=>{
   btn.addEventListener('pointerdown', (e)=>{
     const rect = btn.getBoundingClientRect();
@@ -859,7 +889,7 @@ function renderStats(){
 const entryOverlay = document.getElementById('entryOverlay');
 function fillCategorySelect(){
   const sel = document.getElementById('catSelect');
-  const list = categorias[currentType] || [];
+  const list = sortedCats(currentType);
   sel.innerHTML = list.map(c=>`<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`).join('');
 }
 function setTypeButtons(){
@@ -1038,7 +1068,7 @@ const budgetOverlay = document.getElementById('budgetOverlay');
 function renderBudgetCatRows(){
   const wrap = document.getElementById('budgetCatRows');
   wrap.innerHTML = '';
-  categorias.out.forEach(c=>{
+  sortedCats('out').forEach(c=>{
     const row = document.createElement('div');
     row.className = 'cat-item-row';
     row.innerHTML = `${catBadge(c.name,'out',36)}<span class="cname">${escapeHtml(c.name)}</span><input class="nums bcat-amt" data-cat="${escapeHtml(c.name)}" inputmode="decimal" placeholder="0,00">`;
@@ -1107,30 +1137,56 @@ document.getElementById('saveBudget').addEventListener('click', ()=>{
 
 /* ============ GESTIONAR CATEGORÍAS ============ */
 const catManageOverlay = document.getElementById('catManageOverlay');
-document.getElementById('openCats').addEventListener('click', ()=>{ editingCatManageType='in'; renderCatManage(); renderCatPickers(); catManageOverlay.classList.add('open'); });
+document.getElementById('openCats').addEventListener('click', ()=>{ editingCatManageType='in'; resetCatForm(); renderCatManage(); catManageOverlay.classList.add('open'); });
 document.getElementById('closeCatManage').addEventListener('click', ()=> catManageOverlay.classList.remove('open'));
 catManageOverlay.addEventListener('click', (e)=>{ if(e.target===catManageOverlay) catManageOverlay.classList.remove('open'); });
-document.getElementById('catManageInBtn').addEventListener('click', ()=>{ editingCatManageType='in'; renderCatManage(); });
-document.getElementById('catManageOutBtn').addEventListener('click', ()=>{ editingCatManageType='out'; renderCatManage(); });
+document.getElementById('catManageInBtn').addEventListener('click', ()=>{ editingCatManageType='in'; resetCatForm(); renderCatManage(); });
+document.getElementById('catManageOutBtn').addEventListener('click', ()=>{ editingCatManageType='out'; resetCatForm(); renderCatManage(); });
 function renderCatManage(){
   document.getElementById('catManageInBtn').classList.toggle('active', editingCatManageType==='in');
   document.getElementById('catManageOutBtn').classList.toggle('active', editingCatManageType==='out');
   const wrap = document.getElementById('catManageList');
   wrap.innerHTML = '';
-  categorias[editingCatManageType].forEach((c, idx)=>{
+  sortedCats(editingCatManageType).forEach((c)=>{
+    const realIdx = categorias[editingCatManageType].indexOf(c);
     const inUse = movimientos.some(m=>m.category===c.name && m.type===editingCatManageType);
     const row = document.createElement('div');
     row.className = 'cat-manage-row';
-    row.innerHTML = `${catBadge(c.name, editingCatManageType, 36)}<span class="name">${escapeHtml(c.name)}</span>${inUse ? '' : '<button class="del">Eliminar</button>'}`;
-    if(!inUse){
-      row.querySelector('.del').addEventListener('click', ()=>{
-        categorias[editingCatManageType].splice(idx,1);
+    row.innerHTML = `${catBadge(c.name, editingCatManageType, 36)}<span class="name">${escapeHtml(c.name)}${c.other?' <span style="color:var(--ink-soft);font-weight:400;">(fija)</span>':''}</span>
+      <button class="del" style="color:var(--primary);">Editar</button>
+      ${(!inUse && !c.other) ? '<button class="del">Eliminar</button>' : ''}`;
+    const buttons = row.querySelectorAll('.del');
+    buttons[0].addEventListener('click', ()=> startEditCat(realIdx));
+    if(buttons[1]){
+      buttons[1].addEventListener('click', ()=>{
+        categorias[editingCatManageType].splice(realIdx,1);
         save(K_CAT, categorias);
         renderCatManage();
       });
     }
     wrap.appendChild(row);
   });
+}
+let editingCatIndex = null;
+function startEditCat(idx){
+  editingCatIndex = idx;
+  const c = categorias[editingCatManageType][idx];
+  newCatIcon = c.icon;
+  newCatColor = c.color;
+  document.getElementById('newCatName').value = c.name;
+  document.getElementById('addCatBtn').textContent = 'Guardar cambios';
+  document.getElementById('cancelCatEdit').style.display = 'block';
+  renderCatPickers();
+  document.getElementById('newCatName').scrollIntoView({behavior:'smooth', block:'center'});
+}
+function resetCatForm(){
+  editingCatIndex = null;
+  document.getElementById('newCatName').value = '';
+  document.getElementById('addCatBtn').textContent = 'Añadir categoría';
+  document.getElementById('cancelCatEdit').style.display = 'none';
+  newCatIcon = ICON_KEYS[0];
+  newCatColor = COLOR_PALETTE[0];
+  renderCatPickers();
 }
 function renderCatPickers(){
   const iw = document.getElementById('newCatIconPicker');
@@ -1143,12 +1199,37 @@ function renderCatPickers(){
 document.getElementById('addCatBtn').addEventListener('click', ()=>{
   const name = document.getElementById('newCatName').value.trim();
   if(!name){ toast('Ponle un nombre a la categoría'); return; }
-  categorias[editingCatManageType].push({ name, icon:newCatIcon, color:newCatColor });
-  save(K_CAT, categorias);
-  document.getElementById('newCatName').value = '';
-  renderCatManage();
-  toast('Categoría añadida');
+
+  if(editingCatIndex !== null){
+    const cat = categorias[editingCatManageType][editingCatIndex];
+    const oldName = cat.name;
+    cat.name = name;
+    cat.icon = newCatIcon;
+    cat.color = newCatColor;
+    if(oldName !== name){
+      movimientos.forEach(m=>{ if(m.type===editingCatManageType && m.category===oldName) m.category = name; });
+      presupuestos.forEach(b=>{
+        if(b.scope==='categorias'){
+          b.items.forEach(it=>{ if(it.category===oldName) it.category = name; });
+        }
+      });
+      save(K_MOV, movimientos);
+      save(K_BUD, presupuestos);
+    }
+    save(K_CAT, categorias);
+    resetCatForm();
+    renderCatManage();
+    renderInicio(); renderMovimientos(); renderBudgets();
+    toast('Categoría actualizada');
+  } else {
+    categorias[editingCatManageType].push({ name, icon:newCatIcon, color:newCatColor });
+    save(K_CAT, categorias);
+    resetCatForm();
+    renderCatManage();
+    toast('Categoría añadida');
+  }
 });
+document.getElementById('cancelCatEditBtn').addEventListener('click', resetCatForm);
 
 /* ============ CATEGORIZAR POR CONCEPTO REPETIDO ============ */
 const K_CONCEPT_MAP = 'libreta.conceptmap.v1';
