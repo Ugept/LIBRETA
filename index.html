@@ -196,6 +196,14 @@ svg.ico.lg{width:34px; height:34px; stroke-width:1.6;}
 .tab-toggle button.active{background:var(--primary); color:#fff;}
 
 .icon-picker{display:grid; grid-template-columns:repeat(6,1fr); gap:8px; margin-top:4px;}
+.lucide-search{margin-top:10px; padding-top:10px; border-top:1px dashed var(--rule);}
+.lucide-search input{flex:1;}
+.lucide-search-result{display:flex; align-items:center; gap:10px; margin-top:8px; font-size:.82rem;}
+.lucide-search-result button{
+  width:40px; height:40px; border-radius:12px; border:1.5px solid var(--primary); background:var(--primary-soft);
+  display:flex; align-items:center; justify-content:center; flex:none; cursor:pointer;
+}
+.lucide-link{display:inline-block; margin-top:8px; font-size:.78rem; color:var(--primary); font-weight:700; text-decoration:none;}
 .icon-picker button{
   aspect-ratio:1; border-radius:12px; border:1.5px solid var(--rule); background:var(--card);
   display:flex; align-items:center; justify-content:center; cursor:pointer;
@@ -460,6 +468,14 @@ input[type=file]{display:none;}
     <input id="newCatName" placeholder="Nombre de la categoría">
     <label>Icono</label>
     <div class="icon-picker" id="newCatIconPicker"></div>
+    <div class="lucide-search">
+      <div style="display:flex; gap:8px;">
+        <input id="lucideSearchInput" placeholder="Buscar más iconos (nombre en inglés)">
+        <button type="button" id="lucideSearchBtn" class="btn ghost" style="flex:none; width:auto; padding:0 18px;">Buscar</button>
+      </div>
+      <div id="lucideSearchResult"></div>
+      <a href="https://lucide.dev/icons/" target="_blank" rel="noopener" class="lucide-link">Ver todos los iconos en lucide.dev ↗</a>
+    </div>
     <label>Color</label>
     <div class="color-picker" id="newCatColorPicker"></div>
     <div class="sheet-actions">
@@ -585,6 +601,13 @@ function renderIcon(key, extraClass){
   const p = ICON_PATHS[key] || ICON_PATHS['more-horizontal'];
   return `<svg class="ico ${extraClass||''}" viewBox="0 0 24 24">${p}</svg>`;
 }
+function renderIconRaw(inner, extraClass){
+  return `<svg class="ico ${extraClass||''}" viewBox="0 0 24 24">${inner}</svg>`;
+}
+function catIconMarkup(c, extraClass){
+  if(c.iconSvg) return renderIconRaw(c.iconSvg, extraClass);
+  return renderIcon(c.icon, extraClass);
+}
 const ICON_KEYS = ['home','utensils','shopping-cart','shopping-bag','car-front','gamepad-2','heart','shirt','gift','heart-handshake','briefcase','credit-card','repeat','more-horizontal'];
 const COLOR_PALETTE = ['#F0D9CE','#DDEFE3','#DCE7F5','#EDE3F5','#F5EBD0','#F5D9DC','#E7DFD2'];
 
@@ -651,11 +674,12 @@ let editingCatManageType = 'in';
 let budgetScope = 'general';
 let newCatIcon = ICON_KEYS[0];
 let newCatColor = COLOR_PALETTE[0];
+let newCatIconSvg = null;
 
 function findCat(name, type){ return (categorias[type]||[]).find(c=>c.name===name); }
 function catBadge(name, type, size){
-  const c = findCat(name, type) || {icon:'dots', color:'#E7DFD2'};
-  return `<span class="cat-icon" style="background:${c.color}; ${size?`width:${size}px;height:${size}px;`:''}">${renderIcon(c.icon, size&&size>50?'lg':'')}</span>`;
+  const c = findCat(name, type) || {icon:'more-horizontal', color:'#E7DFD2'};
+  return `<span class="cat-icon" style="background:${c.color}; ${size?`width:${size}px;height:${size}px;`:''}">${catIconMarkup(c, size&&size>50?'lg':'')}</span>`;
 }
 
 /* ============ TEMA ============ */
@@ -1172,30 +1196,68 @@ function startEditCat(idx){
   editingCatIndex = idx;
   const c = categorias[editingCatManageType][idx];
   newCatIcon = c.icon;
+  newCatIconSvg = c.iconSvg || null;
+  newCatIconName = c.iconSvg ? c.icon : null;
   newCatColor = c.color;
   document.getElementById('newCatName').value = c.name;
   document.getElementById('addCatBtn').textContent = 'Guardar cambios';
   document.getElementById('cancelCatEdit').style.display = 'block';
+  document.getElementById('lucideSearchInput').value = '';
   renderCatPickers();
   document.getElementById('newCatName').scrollIntoView({behavior:'smooth', block:'center'});
 }
 function resetCatForm(){
   editingCatIndex = null;
   document.getElementById('newCatName').value = '';
+  document.getElementById('lucideSearchInput').value = '';
   document.getElementById('addCatBtn').textContent = 'Añadir categoría';
   document.getElementById('cancelCatEdit').style.display = 'none';
   newCatIcon = ICON_KEYS[0];
+  newCatIconSvg = null;
+  newCatIconName = null;
   newCatColor = COLOR_PALETTE[0];
   renderCatPickers();
 }
 function renderCatPickers(){
   const iw = document.getElementById('newCatIconPicker');
-  iw.innerHTML = ICON_KEYS.map(k=>`<button type="button" data-icon="${k}" class="${k===newCatIcon?'active':''}">${renderIcon(k)}</button>`).join('');
-  iw.querySelectorAll('button').forEach(b=> b.addEventListener('click', ()=>{ newCatIcon=b.dataset.icon; renderCatPickers(); }));
+  iw.innerHTML = ICON_KEYS.map(k=>`<button type="button" data-icon="${k}" class="${(!newCatIconSvg && k===newCatIcon)?'active':''}">${renderIcon(k)}</button>`).join('');
+  iw.querySelectorAll('button').forEach(b=> b.addEventListener('click', ()=>{
+    newCatIcon = b.dataset.icon; newCatIconSvg = null; newCatIconName = null;
+    renderCatPickers(); renderLucideResultPreview();
+  }));
   const cw = document.getElementById('newCatColorPicker');
   cw.innerHTML = COLOR_PALETTE.map(c=>`<button type="button" data-color="${c}" style="background:${c}" class="${c===newCatColor?'active':''}"></button>`).join('');
   cw.querySelectorAll('button').forEach(b=> b.addEventListener('click', ()=>{ newCatColor=b.dataset.color; renderCatPickers(); }));
+  renderLucideResultPreview();
 }
+let newCatIconName = null;
+function renderLucideResultPreview(){
+  const el = document.getElementById('lucideSearchResult');
+  if(newCatIconSvg){
+    el.innerHTML = `<div class="lucide-search-result"><button type="button" disabled>${renderIconRaw(newCatIconSvg)}</button><span>"${escapeHtml(newCatIconName||'')}" seleccionado ✓</span></div>`;
+  } else {
+    el.innerHTML = '';
+  }
+}
+document.getElementById('lucideSearchBtn').addEventListener('click', async ()=>{
+  const raw = document.getElementById('lucideSearchInput').value.trim().toLowerCase();
+  if(!raw) return;
+  const name = raw.replace(/\s+/g,'-');
+  const resultEl = document.getElementById('lucideSearchResult');
+  resultEl.innerHTML = '<span style="font-size:.8rem;color:var(--ink-soft);">Buscando…</span>';
+  try{
+    const res = await fetch(`https://unpkg.com/lucide-static@latest/icons/${name}.svg`);
+    if(!res.ok) throw new Error('not found');
+    const svgText = await res.text();
+    const inner = svgText.replace(/^[\s\S]*?<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '').trim();
+    if(!inner) throw new Error('empty');
+    newCatIconSvg = inner;
+    newCatIconName = name;
+    renderCatPickers();
+  }catch(err){
+    resultEl.innerHTML = '<span style="font-size:.8rem;color:var(--red);">No se encontró ningún icono con ese nombre exacto. Compruébalo en lucide.dev/icons.</span>';
+  }
+});
 document.getElementById('addCatBtn').addEventListener('click', ()=>{
   const name = document.getElementById('newCatName').value.trim();
   if(!name){ toast('Ponle un nombre a la categoría'); return; }
@@ -1205,6 +1267,7 @@ document.getElementById('addCatBtn').addEventListener('click', ()=>{
     const oldName = cat.name;
     cat.name = name;
     cat.icon = newCatIcon;
+    cat.iconSvg = newCatIconSvg || undefined;
     cat.color = newCatColor;
     if(oldName !== name){
       movimientos.forEach(m=>{ if(m.type===editingCatManageType && m.category===oldName) m.category = name; });
@@ -1222,7 +1285,7 @@ document.getElementById('addCatBtn').addEventListener('click', ()=>{
     renderInicio(); renderMovimientos(); renderBudgets();
     toast('Categoría actualizada');
   } else {
-    categorias[editingCatManageType].push({ name, icon:newCatIcon, color:newCatColor });
+    categorias[editingCatManageType].push({ name, icon:newCatIcon, iconSvg:newCatIconSvg || undefined, color:newCatColor });
     save(K_CAT, categorias);
     resetCatForm();
     renderCatManage();
