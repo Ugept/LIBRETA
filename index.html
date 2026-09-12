@@ -10,15 +10,15 @@
 <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAADyElEQVR4nO3dvVHcUBiG0cXjkoCAjuwSXAAtUIxzB7YTN0FKRO7gzsgaGzOC9/5JOieGvTvsw4dWrK6unp8eL/BeH0Y/AfZNQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQ+1n24n18+bfmy6/uHuusySuWANrq9uRuy7nl8//Gtz0L+hB3T7c1dn99SAR1Zh4wEdHxNGxLQKbRrSEBn0aihMe/CeKtX3lVtL+P25q76uzMBzWvji73+sv7nRwQ0o3/TeeUM7fqsbPnGnhld1d3eZeOZ6M9ff1Vc9EjW6Wz8Ya6tY/pfRnX/iplAswjTWX9jyajPNBLQFJZ63p3O2l8ZOQ90cHXrWSyP1vT/YibQYOXVrZvOYhlF7eaQCTRS03oW5fEbzSEBDdOnnqJdQwIao2c9RaOGBDRAt097dSCgYXqOn3YrCqi3/n+81qqvKyAiAupq7Pgp6q4uICIC6meG8VNUfA4CIiIgIgIiIqBO5jkAKmo9EwERERARAREREBEBEREQEQERERARAXVSrqqZZ3fRWs9EQEQERERARATUzzyHQRWfg4CICKirGYZQ3dX3tDvHkS7oPAwTaIxRQ6j6unuaQIe5RUsZpdf3D50/oNiiWhNogMP8JlwENEr/o+myVvV2BTRMz4Ya1XMR0Fh9GmpXz2VfB9GHVO5fUV7j6sfUS5ru1nNky6tbdxR1qOdiAk1iuY9OlVG05YYHtQhoFuWVDjPqmU4hoLn8m1Gx8W496wfpQ0AzWmdUbDw8cr8w/ljXUOWOhS0IaB+m/e+Ht/FEBEREQEQERERARAREREBEBERkTycSXdbzorHnGE0gInuaQNOezj8zE4iIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIjs6UP1Lut5kct62LE9TSCX9UzIBCIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICJ7+lC9y3pe5LIedmxPE8hlPRMygYgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgIiIiAiAiIiICICIiIgIgI6Fyq7y8gICICOpEW25sIiIiAzqLR7koCOoV2e3MJ6Pia7uy2pw2meKsOmwIK6Ji67Sd59fz02GclDskxEBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEREQEQERERARAREREBEBEfkNmzD6Tlw4LT0AAAAASUVORK5CYII=">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#F5EFE6; --card:#FFFFFF; --ink:#2B2420; --ink-soft:#8A7F72;
   --primary:#C1694F; --primary-soft:#F0D9CE;
   --green:#2F8F5B; --green-soft:#DDEFE3;
   --red:#C1443B; --red-soft:#F6DEDB;
-  --rule:#E7DFD2; --shadow:rgba(43,36,32,.10);
-  --radius:16px;
+  --rule:#E7DFD2; --shadow:rgba(43,36,32,.09);
+  --radius:20px; --radius-sm:14px;
 }
 [data-theme="dark"]{
   --bg:#1B1815; --card:#26221D; --ink:#F1EAE0; --ink-soft:#A79C8C;
@@ -31,7 +31,7 @@
 html,body{height:100%;}
 body{
   margin:0; background:var(--bg); color:var(--ink);
-  font-family:'Nunito', system-ui, sans-serif;
+  font-family:'Inter', system-ui, sans-serif;
   -webkit-font-smoothing:antialiased;
   overscroll-behavior-y:none;
   padding-bottom:calc(72px + env(safe-area-inset-bottom));
@@ -39,76 +39,77 @@ body{
 }
 .nums{font-family:'IBM Plex Mono', ui-monospace, monospace; font-variant-numeric:tabular-nums;}
 button, input, select{font-family:inherit;}
+svg.ico{width:20px; height:20px; stroke:#2B2420; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;}
+svg.ico.lg{width:34px; height:34px; stroke-width:1.6;}
 
 /* ---- top bar ---- */
 .topbar{
   display:flex; align-items:center; justify-content:space-between;
-  padding:calc(16px + env(safe-area-inset-top)) 18px 14px;
+  padding:calc(16px + env(safe-area-inset-top)) 20px 14px;
 }
-.topbar h1{margin:0; font-size:1.15rem; font-weight:800;}
-.topbar .back{background:none;border:none;font-size:1.3rem;color:var(--ink);padding:4px;cursor:pointer;}
+.topbar h1{margin:0; font-size:1.2rem; font-weight:800; letter-spacing:-.01em;}
 .topbar .spacer{width:28px;}
 
-.page{display:none; padding:0 16px 24px;}
+.page{display:none; padding:0 18px 24px;}
 .page.active{display:block;}
 
 /* ---- Inicio ---- */
-.hello{padding:0 2px 14px;}
-.hello h2{margin:0 0 2px; font-size:1.3rem; font-weight:800;}
-.hello p{margin:0; color:var(--ink-soft); font-size:.85rem;}
+.hello{padding:0 2px 16px;}
+.hello h2{margin:0 0 2px; font-size:1.35rem; font-weight:800; letter-spacing:-.01em;}
+.hello p{margin:0; color:var(--ink-soft); font-size:.87rem;}
 
-.stat-row{display:flex; gap:10px; margin-bottom:16px;}
+.stat-row{display:flex; gap:12px; margin-bottom:18px;}
 .stat-card{
-  flex:1; background:var(--card); border-radius:var(--radius);
-  padding:12px 10px; box-shadow:0 4px 14px var(--shadow);
+  flex:1; background:var(--card); border-radius:var(--radius-sm);
+  padding:14px 12px; box-shadow:0 6px 18px var(--shadow);
 }
-.stat-card .k{font-size:.68rem; color:var(--ink-soft); margin-bottom:4px;}
-.stat-card .v{font-size:1.05rem; font-weight:700;}
+.stat-card .k{font-size:.68rem; color:var(--ink-soft); margin-bottom:5px; font-weight:600;}
+.stat-card .v{font-size:1.08rem; font-weight:700;}
 .stat-card .v.in{color:var(--green);}
 .stat-card .v.out{color:var(--red);}
 
 .chart-card{
   background:var(--card); border-radius:var(--radius);
-  padding:16px 14px; margin-bottom:16px; box-shadow:0 4px 14px var(--shadow);
+  padding:20px 18px; margin-bottom:18px; box-shadow:0 6px 18px var(--shadow);
 }
-.chart-card h3{margin:0 0 12px; font-size:.9rem; font-weight:700;}
-.bars{display:flex; align-items:flex-end; gap:6px; height:90px;}
-.bars .bar-col{flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;}
-.bars .bar{width:100%; border-radius:5px 5px 2px 2px; background:var(--primary-soft); min-height:3px;}
+.chart-card h3{margin:0 0 14px; font-size:.9rem; font-weight:700;}
+.bars{display:flex; align-items:flex-end; gap:8px; height:90px;}
+.bars .bar-col{flex:1; display:flex; flex-direction:column; align-items:center; gap:6px;}
+.bars .bar{width:100%; border-radius:6px 6px 3px 3px; background:var(--primary-soft); min-height:3px;}
 .bars .bar-col.current .bar{background:var(--primary);}
-.bars .lbl{font-size:.6rem; color:var(--ink-soft);}
+.bars .lbl{font-size:.62rem; color:var(--ink-soft); font-weight:600;}
 
-.section-head{display:flex; justify-content:space-between; align-items:baseline; margin:4px 2px 8px;}
-.section-head h3{margin:0; font-size:.95rem; font-weight:700;}
+.section-head{display:flex; justify-content:space-between; align-items:baseline; margin:6px 2px 10px;}
+.section-head h3{margin:0; font-size:.98rem; font-weight:700;}
 .section-head .link{border:none; background:none; color:var(--primary); font-size:.8rem; font-weight:700; cursor:pointer;}
 
 .cat-row{
-  display:flex; align-items:center; gap:12px;
-  background:var(--card); border-radius:14px; padding:11px 12px; margin-bottom:8px;
-  box-shadow:0 2px 8px var(--shadow); cursor:pointer;
+  display:flex; align-items:center; gap:13px;
+  background:var(--card); border-radius:var(--radius-sm); padding:13px 14px; margin-bottom:9px;
+  box-shadow:0 3px 12px var(--shadow); cursor:pointer;
 }
 .cat-icon{
-  width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center;
-  font-size:1.1rem; flex:none;
+  width:44px; height:44px; border-radius:13px; display:flex; align-items:center; justify-content:center;
+  flex:none;
 }
-.cat-row .name{flex:1; font-weight:700; font-size:.92rem;}
-.cat-row .amt{font-weight:700; font-size:.92rem;}
+.cat-row .name{flex:1; font-weight:700; font-size:.93rem;}
+.cat-row .amt{font-weight:700; font-size:.93rem;}
 
 /* ---- Movimientos ---- */
-.month-nav{display:flex; align-items:center; justify-content:space-between; margin:4px 2px 12px;}
+.month-nav{display:flex; align-items:center; justify-content:space-between; margin:4px 2px 14px;}
 .month-nav button{background:none;border:none;color:var(--primary);font-size:1.3rem;padding:4px 10px;cursor:pointer;}
 .month-nav .m-label{font-size:.95rem;font-weight:700;text-transform:capitalize;}
 
-.day-label{font-size:.72rem; color:var(--ink-soft); margin:14px 4px 6px; text-transform:capitalize;}
+.day-label{font-size:.72rem; color:var(--ink-soft); margin:16px 4px 8px; text-transform:capitalize; font-weight:600;}
 .entry{
-  display:flex; align-items:center; gap:11px; background:var(--card);
-  border-radius:14px; padding:11px 12px; margin-bottom:7px; box-shadow:0 2px 8px var(--shadow);
+  display:flex; align-items:center; gap:13px; background:var(--card);
+  border-radius:var(--radius-sm); padding:13px 14px; margin-bottom:8px; box-shadow:0 3px 12px var(--shadow);
   cursor:pointer;
 }
 .entry .desc{flex:1; min-width:0;}
-.entry .desc .t{font-size:.92rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-.entry .desc .c{font-size:.72rem; color:var(--ink-soft);}
-.entry .amt{font-size:.92rem; font-weight:700; white-space:nowrap;}
+.entry .desc .t{font-size:.93rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.entry .desc .c{font-size:.74rem; color:var(--ink-soft);}
+.entry .amt{font-size:.93rem; font-weight:700; white-space:nowrap;}
 .entry .amt.in{color:var(--green);}
 .entry .amt.out{color:var(--red);}
 
@@ -117,33 +118,32 @@ button, input, select{font-family:inherit;}
 
 /* ---- Presupuestos ---- */
 .budget-card{
-  background:var(--card); border-radius:var(--radius); padding:16px; margin-bottom:14px;
-  box-shadow:0 4px 14px var(--shadow);
+  background:var(--card); border-radius:var(--radius); padding:20px; margin-bottom:16px;
+  box-shadow:0 6px 18px var(--shadow);
 }
-.budget-card .top-row{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;}
-.budget-card h4{margin:0 0 2px; font-size:1rem; font-weight:800;}
+.budget-card .top-row{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;}
+.budget-card h4{margin:0 0 2px; font-size:1.02rem; font-weight:800;}
 .budget-card .period{font-size:.72rem; color:var(--ink-soft); text-transform:capitalize;}
 .budget-card .del{background:none;border:none;color:var(--ink-soft);font-size:1.1rem;cursor:pointer;}
-.progress-track{background:var(--rule); border-radius:8px; height:8px; overflow:hidden; margin:6px 0 6px;}
+.progress-track{background:var(--rule); border-radius:8px; height:9px; overflow:hidden; margin:7px 0 7px;}
 .progress-fill{height:100%; background:var(--primary); border-radius:8px;}
 .progress-fill.over{background:var(--red);}
-.budget-card .meta{display:flex; justify-content:space-between; font-size:.78rem; color:var(--ink-soft);}
-.budget-card .cat-line{display:flex; justify-content:space-between; font-size:.82rem; margin:8px 0 0; padding-top:8px; border-top:1px dashed var(--rule);}
+.budget-card .meta{display:flex; justify-content:space-between; font-size:.8rem; color:var(--ink-soft);}
+.budget-card .cat-line{display:flex; align-items:center; gap:8px; font-size:.83rem; margin:10px 0 0; padding-top:10px; border-top:1px dashed var(--rule);}
+.budget-card .cat-line .cn{flex:1;}
 
-.empty-cta{
-  text-align:center; padding:40px 20px; color:var(--ink-soft); font-size:.9rem;
-}
+.empty-cta{text-align:center; padding:44px 20px; color:var(--ink-soft); font-size:.9rem;}
 .btn-outline{
-  display:inline-block; margin-top:12px; padding:11px 20px; border-radius:12px;
+  display:inline-block; margin-top:14px; padding:12px 22px; border-radius:14px;
   border:1.5px solid var(--primary); color:var(--primary); background:none; font-weight:700; font-size:.88rem;
   cursor:pointer;
 }
 
 /* ---- Más ---- */
-.more-group{background:var(--card); border-radius:var(--radius); margin-bottom:14px; overflow:hidden; box-shadow:0 4px 14px var(--shadow);}
+.more-group{background:var(--card); border-radius:var(--radius); margin-bottom:16px; overflow:hidden; box-shadow:0 6px 18px var(--shadow);}
 .more-item{
-  display:flex; align-items:center; justify-content:space-between; padding:14px 16px;
-  border-bottom:1px solid var(--rule); font-size:.9rem; font-weight:600;
+  display:flex; align-items:center; justify-content:space-between; padding:16px 18px;
+  border-bottom:1px solid var(--rule); font-size:.92rem; font-weight:600;
 }
 .more-item:last-child{border-bottom:none;}
 .more-item button.item-btn{all:unset; display:flex; justify-content:space-between; align-items:center; width:100%; cursor:pointer; color:var(--ink);}
@@ -156,15 +156,23 @@ button, input, select{font-family:inherit;}
 .switch input:checked + .track{background:var(--primary);}
 .switch input:checked + .track:before{transform:translateX(20px);}
 
-.cat-manage-row{
-  display:flex; align-items:center; gap:10px; padding:10px 4px; border-bottom:1px solid var(--rule);
-}
+.cat-manage-row{display:flex; align-items:center; gap:12px; padding:11px 4px; border-bottom:1px solid var(--rule);}
 .cat-manage-row:last-child{border-bottom:none;}
 .cat-manage-row .name{flex:1; font-size:.9rem; font-weight:600;}
-.cat-manage-row .del{background:none;border:none;color:var(--red);font-size:.8rem;cursor:pointer;}
-.tab-toggle{display:flex; background:var(--bg); border-radius:10px; padding:3px; margin-bottom:12px;}
-.tab-toggle button{flex:1;border:none;background:none;padding:8px 0;border-radius:8px;font-size:.85rem;font-weight:700;color:var(--ink-soft);cursor:pointer;}
+.cat-manage-row .del{background:none;border:none;color:var(--red);font-size:.8rem;cursor:pointer; font-weight:600;}
+.tab-toggle{display:flex; background:var(--bg); border-radius:12px; padding:3px; margin-bottom:14px;}
+.tab-toggle button{flex:1;border:none;background:none;padding:9px 0;border-radius:9px;font-size:.85rem;font-weight:700;color:var(--ink-soft);cursor:pointer;}
 .tab-toggle button.active{background:var(--primary); color:#fff;}
+
+.icon-picker{display:grid; grid-template-columns:repeat(6,1fr); gap:8px; margin-top:4px;}
+.icon-picker button{
+  aspect-ratio:1; border-radius:12px; border:1.5px solid var(--rule); background:var(--card);
+  display:flex; align-items:center; justify-content:center; cursor:pointer;
+}
+.icon-picker button.active{border-color:var(--primary); background:var(--primary-soft);}
+.color-picker{display:flex; gap:8px; margin-top:4px; flex-wrap:wrap;}
+.color-picker button{width:30px; height:30px; border-radius:50%; border:2px solid transparent; cursor:pointer;}
+.color-picker button.active{border-color:var(--ink);}
 
 /* ---- bottom tab bar ---- */
 .tabbar{
@@ -174,23 +182,24 @@ button, input, select{font-family:inherit;}
 }
 .tabbar button{
   flex:1; background:none; border:none; padding:9px 0 8px; display:flex; flex-direction:column;
-  align-items:center; gap:2px; color:var(--ink-soft); font-size:.66rem; font-weight:700; cursor:pointer;
+  align-items:center; gap:3px; color:var(--ink-soft); font-size:.65rem; font-weight:700; cursor:pointer;
 }
-.tabbar button .ic{font-size:1.15rem;}
+.tabbar button svg.ico{width:20px; height:20px; stroke:var(--ink-soft);}
 .tabbar button.active{color:var(--primary);}
+.tabbar button.active svg.ico{stroke:var(--primary);}
 
 /* ---- floating buttons ---- */
 .fab{
-  position:fixed; right:18px; bottom:calc(84px + env(safe-area-inset-bottom));
+  position:fixed; right:20px; bottom:calc(86px + env(safe-area-inset-bottom));
   width:56px; height:56px; border-radius:50%; background:var(--primary); color:#fff;
-  border:none; font-size:1.7rem; box-shadow:0 8px 18px rgba(193,105,79,.4); cursor:pointer;
+  border:none; font-size:1.7rem; box-shadow:0 10px 22px rgba(193,105,79,.4); cursor:pointer;
   display:none; align-items:center; justify-content:center; z-index:35;
 }
 .fab.show{display:flex;}
 .calc-fab{
-  position:fixed; left:18px; bottom:calc(84px + env(safe-area-inset-bottom));
+  position:fixed; left:20px; bottom:calc(86px + env(safe-area-inset-bottom));
   width:50px; height:50px; border-radius:50%; background:var(--card); color:var(--ink);
-  border:1px solid var(--rule); font-size:1.3rem; box-shadow:0 6px 14px var(--shadow); cursor:pointer;
+  border:1px solid var(--rule); font-size:1.3rem; box-shadow:0 6px 16px var(--shadow); cursor:pointer;
   display:flex; align-items:center; justify-content:center; z-index:35;
 }
 
@@ -201,43 +210,43 @@ button, input, select{font-family:inherit;}
 }
 .sheet-overlay.open{display:flex;}
 .sheet{
-  background:var(--bg); width:100%; max-width:480px; border-radius:20px 20px 0 0;
-  padding:18px 20px calc(20px + env(safe-area-inset-bottom)); max-height:90vh; overflow-y:auto;
+  background:var(--bg); width:100%; max-width:480px; border-radius:24px 24px 0 0;
+  padding:20px 20px calc(20px + env(safe-area-inset-bottom)); max-height:90vh; overflow-y:auto;
 }
-.sheet h2{margin:2px 0 16px; font-size:1.1rem; font-weight:800;}
-label{display:block; font-size:.72rem; color:var(--ink-soft); margin:12px 2px 5px; font-weight:700;}
+.sheet h2{margin:2px 0 18px; font-size:1.12rem; font-weight:800;}
+label{display:block; font-size:.72rem; color:var(--ink-soft); margin:14px 2px 6px; font-weight:700;}
 input, select{
-  width:100%; font-size:1rem; padding:11px 12px; border:1px solid var(--rule); border-radius:10px;
+  width:100%; font-size:1rem; padding:12px 13px; border:1px solid var(--rule); border-radius:12px;
   background:var(--card); color:var(--ink);
 }
 input.nums{font-size:1.3rem;}
 input:focus, select:focus{outline:2px solid var(--primary); outline-offset:1px;}
 
-.type-toggle{display:flex; background:var(--card); border:1px solid var(--rule); border-radius:10px; padding:4px; margin-bottom:6px;}
-.type-toggle button{flex:1; border:none; background:none; padding:9px 0; border-radius:8px; font-size:.9rem; color:var(--ink-soft); cursor:pointer; font-weight:700;}
+.type-toggle{display:flex; background:var(--card); border:1px solid var(--rule); border-radius:12px; padding:4px; margin-bottom:6px;}
+.type-toggle button{flex:1; border:none; background:none; padding:10px 0; border-radius:9px; font-size:.9rem; color:var(--ink-soft); cursor:pointer; font-weight:700;}
 .type-toggle button.active.in{background:var(--green); color:#fff;}
 .type-toggle button.active.out{background:var(--red); color:#fff;}
 
-.sheet-actions{display:flex; gap:10px; margin-top:20px;}
-.btn{flex:1; padding:13px 0; border-radius:10px; border:none; font-size:.95rem; cursor:pointer; font-weight:700;}
+.sheet-actions{display:flex; gap:10px; margin-top:22px;}
+.btn{flex:1; padding:14px 0; border-radius:13px; border:none; font-size:.95rem; cursor:pointer; font-weight:700;}
 .btn.primary{background:var(--primary); color:#fff;}
 .btn.ghost{background:var(--card); border:1px solid var(--rule); color:var(--ink);}
 .btn.danger{background:var(--red); color:#fff;}
 
-.cat-item-row{display:flex; gap:8px; align-items:center; margin-bottom:8px;}
+.cat-item-row{display:flex; gap:10px; align-items:center; margin-bottom:9px;}
 .cat-item-row .cname{flex:1; font-size:.88rem; font-weight:600;}
 .cat-item-row input{width:90px; text-align:right;}
-.budget-total-line{display:flex; justify-content:space-between; font-weight:800; margin-top:10px; padding-top:10px; border-top:1px dashed var(--rule);}
+.budget-total-line{display:flex; justify-content:space-between; font-weight:800; margin-top:12px; padding-top:12px; border-top:1px dashed var(--rule);}
 
 /* calculator */
 .calc-sheet .display{
-  background:var(--card); border-radius:12px; padding:18px 14px; text-align:right;
-  font-family:'IBM Plex Mono', monospace; font-size:2rem; margin-bottom:12px; word-break:break-all;
+  background:var(--card); border-radius:14px; padding:20px 16px; text-align:right;
+  font-family:'IBM Plex Mono', monospace; font-size:2rem; margin-bottom:14px; word-break:break-all;
   border:1px solid var(--rule);
 }
-.calc-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}
+.calc-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:9px;}
 .calc-grid button{
-  padding:16px 0; border-radius:12px; border:none; background:var(--card); color:var(--ink);
+  padding:17px 0; border-radius:14px; background:var(--card); color:var(--ink);
   font-size:1.15rem; font-weight:700; cursor:pointer; border:1px solid var(--rule);
 }
 .calc-grid button.op{background:var(--primary-soft); color:var(--primary);}
@@ -246,7 +255,7 @@ input:focus, select:focus{outline:2px solid var(--primary); outline-offset:1px;}
 
 #toast{
   position:fixed; bottom:100px; left:50%; transform:translateX(-50%);
-  background:var(--ink); color:var(--bg); padding:10px 18px; border-radius:20px; font-size:.85rem;
+  background:var(--ink); color:var(--bg); padding:11px 20px; border-radius:22px; font-size:.85rem;
   opacity:0; pointer-events:none; transition:opacity .25s; z-index:60;
 }
 #toast.show{opacity:1;}
@@ -256,9 +265,9 @@ input:focus, select:focus{outline:2px solid var(--primary); outline-offset:1px;}
 
 <!-- ===== INICIO ===== -->
 <section class="page active" id="page-inicio">
-  <div class="topbar"><h1>LIBRETA</h1><span style="font-size:1.4rem">🐷</span></div>
+  <div class="topbar"><h1>LIBRETA</h1><span class="spacer"></span></div>
   <div class="hello">
-    <h2 id="helloTitle">Tu hogar, en balance</h2>
+    <h2>Tu hogar, en balance</h2>
     <p>Resumen de este mes</p>
   </div>
   <div class="stat-row">
@@ -294,14 +303,9 @@ input:focus, select:focus{outline:2px solid var(--primary); outline-offset:1px;}
 <!-- ===== MÁS ===== -->
 <section class="page" id="page-mas">
   <div class="topbar"><h1>Más</h1><span class="spacer"></span></div>
-
   <div class="more-group">
-    <div class="more-item">
-      <span>Modo oscuro</span>
-      <label class="switch"><input type="checkbox" id="darkToggle"><span class="track"></span></label>
-    </div>
+    <div class="more-item"><span>Modo oscuro</span><label class="switch"><input type="checkbox" id="darkToggle"><span class="track"></span></label></div>
   </div>
-
   <div class="more-group">
     <div class="more-item"><button class="item-btn" id="openCats">Gestionar categorías <span class="chev">›</span></button></div>
     <div class="more-item"><button class="item-btn" id="exportBtn">Exportar copia de seguridad (.json) <span class="chev">›</span></button></div>
@@ -312,18 +316,16 @@ input:focus, select:focus{outline:2px solid var(--primary); outline-offset:1px;}
 
 <input type="file" id="importFile" accept="application/json">
 
-<!-- ===== bottom tab bar ===== -->
 <nav class="tabbar">
-  <button class="tab-btn active" data-tab="inicio"><span class="ic">🏠</span>Inicio</button>
-  <button class="tab-btn" data-tab="movimientos"><span class="ic">📋</span>Movimientos</button>
-  <button class="tab-btn" data-tab="presupuestos"><span class="ic">🎯</span>Presupuestos</button>
-  <button class="tab-btn" data-tab="mas"><span class="ic">⋯</span>Más</button>
+  <button class="tab-btn active" data-tab="inicio" data-ic="home">Inicio</button>
+  <button class="tab-btn" data-tab="movimientos" data-ic="list">Movimientos</button>
+  <button class="tab-btn" data-tab="presupuestos" data-ic="target">Presupuestos</button>
+  <button class="tab-btn" data-tab="mas" data-ic="dots">Más</button>
 </nav>
 
 <button class="fab" id="addBtn">+</button>
 <button class="calc-fab" id="calcFab">🧮</button>
 
-<!-- ===== Sheet: nuevo/editar movimiento ===== -->
 <div class="sheet-overlay" id="entryOverlay">
   <div class="sheet">
     <h2 id="entryTitle">Nuevo movimiento</h2>
@@ -349,19 +351,15 @@ input:focus, select:focus{outline:2px solid var(--primary); outline-offset:1px;}
   </div>
 </div>
 
-<!-- ===== Sheet: categoría (detalle desde Inicio) ===== -->
 <div class="sheet-overlay" id="catDetailOverlay">
   <div class="sheet">
     <h2 id="catDetailTitle">Categoría</h2>
     <div id="catDetailBudget"></div>
     <div id="catDetailList"></div>
-    <div class="sheet-actions">
-      <button class="btn ghost" id="closeCatDetail">Cerrar</button>
-    </div>
+    <div class="sheet-actions"><button class="btn ghost" id="closeCatDetail">Cerrar</button></div>
   </div>
 </div>
 
-<!-- ===== Sheet: nuevo presupuesto ===== -->
 <div class="sheet-overlay" id="budgetOverlay">
   <div class="sheet">
     <h2>Nuevo presupuesto</h2>
@@ -373,7 +371,7 @@ input:focus, select:focus{outline:2px solid var(--primary); outline-offset:1px;}
       <option value="trimestral">Trimestral</option>
       <option value="anual">Anual</option>
     </select>
-    <div class="tab-toggle" style="margin-top:14px;">
+    <div class="tab-toggle" style="margin-top:16px;">
       <button type="button" id="scopeGeneralBtn" class="active">General</button>
       <button type="button" id="scopeCatBtn">Por categorías</button>
     </div>
@@ -392,7 +390,6 @@ input:focus, select:focus{outline:2px solid var(--primary); outline-offset:1px;}
   </div>
 </div>
 
-<!-- ===== Sheet: gestionar categorías ===== -->
 <div class="sheet-overlay" id="catManageOverlay">
   <div class="sheet">
     <h2>Categorías</h2>
@@ -402,10 +399,11 @@ input:focus, select:focus{outline:2px solid var(--primary); outline-offset:1px;}
     </div>
     <div id="catManageList"></div>
     <label>Nueva categoría</label>
-    <div style="display:flex; gap:8px;">
-      <input id="newCatEmoji" placeholder="🏷️" style="width:56px; text-align:center;" maxlength="4">
-      <input id="newCatName" placeholder="Nombre de la categoría" style="flex:1;">
-    </div>
+    <input id="newCatName" placeholder="Nombre de la categoría">
+    <label>Icono</label>
+    <div class="icon-picker" id="newCatIconPicker"></div>
+    <label>Color</label>
+    <div class="color-picker" id="newCatColorPicker"></div>
     <div class="sheet-actions">
       <button class="btn primary" id="addCatBtn">Añadir categoría</button>
     </div>
@@ -415,7 +413,6 @@ input:focus, select:focus{outline:2px solid var(--primary); outline-offset:1px;}
   </div>
 </div>
 
-<!-- ===== Sheet: calculadora ===== -->
 <div class="sheet-overlay" id="calcOverlay">
   <div class="sheet calc-sheet">
     <h2>Calculadora</h2>
@@ -427,18 +424,41 @@ input:focus, select:focus{outline:2px solid var(--primary); outline-offset:1px;}
       <button data-c="1">1</button><button data-c="2">2</button><button data-c="3">3</button><button class="op" data-c="+">+</button>
       <button class="wide" data-c="0">0</button><button data-c=",">,</button><button class="eq" data-c="=">=</button>
     </div>
-    <div class="sheet-actions">
-      <button class="btn ghost" id="closeCalc">Cerrar</button>
-    </div>
+    <div class="sheet-actions"><button class="btn ghost" id="closeCalc">Cerrar</button></div>
   </div>
 </div>
 
 <div id="toast"></div>
 
 <script>
+/* ============ ICONOS SVG ============ */
+const ICON_PATHS = {
+  home: '<path d="M3 11l9-7 9 7"/><path d="M5 10v9a1 1 0 0 0 1 1h3v-6h6v6h3a1 1 0 0 0 1-1v-9"/>',
+  cart: '<path d="M3 4h2l2.4 12.4a2 2 0 0 0 2 1.6h7.2a2 2 0 0 0 2-1.6L21 8H6"/><circle cx="9" cy="20" r="1.4"/><circle cx="17" cy="20" r="1.4"/>',
+  car: '<path d="M3 13l2-5a2 2 0 0 1 2-1h10a2 2 0 0 1 2 1l2 5v5a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-1H6v1a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-5z"/><circle cx="7.5" cy="16" r="1.4"/><circle cx="16.5" cy="16" r="1.4"/>',
+  gamepad: '<rect x="4" y="8" width="16" height="9" rx="4"/><path d="M8 11v3M6.5 12.5h3"/><circle cx="15.5" cy="11.2" r=".9"/><circle cx="17.5" cy="13.2" r=".9"/>',
+  heart: '<path d="M12 20s-7-4.35-9.5-8.5C.9 8 2.4 4.6 5.8 4.6c2 0 3.4 1.2 4.4 2.6 1-1.4 2.4-2.6 4.4-2.6 3.4 0 4.9 3.4 3.3 6.9C19 15.65 12 20 12 20z"/>',
+  bag: '<path d="M6 8h12l1 12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>',
+  repeat: '<path d="M4 8a8 8 0 0 1 14-4.9M18 3v4h-4"/><path d="M20 16a8 8 0 0 1-14 4.9M6 21v-4h4"/>',
+  briefcase: '<rect x="3" y="8" width="18" height="11" rx="1.5"/><path d="M8 8V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 13h18"/>',
+  tag: '<path d="M3 11V5a1 1 0 0 1 1-1h6l11 11-7 7L3 11z"/><circle cx="7.5" cy="7.5" r="1.3"/>',
+  gift: '<rect x="4" y="9" width="16" height="11"/><rect x="2" y="6" width="20" height="4"/><path d="M12 6v14"/><path d="M12 6c-1.5-3.2-5.3-4-5.3-1.3S9 6 12 6zm0 0c1.5-3.2 5.3-4 5.3-1.3S15 6 12 6z"/>',
+  wallet: '<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/><circle cx="17" cy="14.2" r="1.1"/>',
+  dots: '<circle cx="6" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="18" cy="12" r="1.5"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  list: '<path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1.2"/><circle cx="3.5" cy="12" r="1.2"/><circle cx="3.5" cy="18" r="1.2"/>',
+  target: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4"/>'
+};
+function renderIcon(key, extraClass){
+  const p = ICON_PATHS[key] || ICON_PATHS.dots;
+  return `<svg class="ico ${extraClass||''}" viewBox="0 0 24 24">${p}</svg>`;
+}
+const ICON_KEYS = ['home','cart','car','gamepad','heart','bag','repeat','briefcase','tag','gift','wallet','dots','plus'];
+const COLOR_PALETTE = ['#F0D9CE','#DDEFE3','#DCE7F5','#EDE3F5','#F5EBD0','#F5D9DC','#E7DFD2'];
+
 /* ============ ESTADO Y PERSISTENCIA ============ */
 const K_MOV = 'cuentas.movimientos.v1';
-const K_CAT = 'libreta.categorias.v1';
+const K_CAT = 'libreta.categorias.v2';
 const K_BUD = 'libreta.presupuestos.v1';
 const K_THEME = 'libreta.theme.v1';
 
@@ -456,13 +476,15 @@ function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s; 
 function defaultCategorias(){
   return {
     in: [
-      {name:'Nómina', icon:'💼'}, {name:'Ventas', icon:'🏷️'}, {name:'Regalo', icon:'🎁'},
-      {name:'Reembolso', icon:'💳'}, {name:'Otro ingreso', icon:'➕'}
+      {name:'Nómina', icon:'briefcase', color:'#DCE7F5'}, {name:'Ventas', icon:'tag', color:'#F5EBD0'},
+      {name:'Regalo', icon:'gift', color:'#EDE3F5'}, {name:'Reembolso', icon:'wallet', color:'#DDEFE3'},
+      {name:'Otro ingreso', icon:'plus', color:'#F0D9CE'}
     ],
     out: [
-      {name:'Vivienda', icon:'🏠'}, {name:'Alimentación', icon:'🛒'}, {name:'Transporte', icon:'🚗'},
-      {name:'Ocio', icon:'🎮'}, {name:'Salud', icon:'❤️'}, {name:'Compras', icon:'🛍️'},
-      {name:'Suscripciones', icon:'🔁'}, {name:'Otro gasto', icon:'➕'}
+      {name:'Vivienda', icon:'home', color:'#F0D9CE'}, {name:'Alimentación', icon:'cart', color:'#DDEFE3'},
+      {name:'Transporte', icon:'car', color:'#DCE7F5'}, {name:'Ocio', icon:'gamepad', color:'#EDE3F5'},
+      {name:'Salud', icon:'heart', color:'#F5D9DC'}, {name:'Compras', icon:'bag', color:'#F5EBD0'},
+      {name:'Suscripciones', icon:'repeat', color:'#DCE7F5'}, {name:'Otro gasto', icon:'dots', color:'#E7DFD2'}
     ]
   };
 }
@@ -475,12 +497,13 @@ let editingId = null;
 let currentType = 'in';
 let editingCatManageType = 'in';
 let budgetScope = 'general';
+let newCatIcon = ICON_KEYS[0];
+let newCatColor = COLOR_PALETTE[0];
 
-const ICON_PALETTE = ['#F0D9CE','#DDEFE3','#DCE7F5','#EDE3F5','#F5EBD0','#F5D9DC'];
-function iconBg(idx){ return ICON_PALETTE[idx % ICON_PALETTE.length]; }
-function findCat(name, type){
-  const list = categorias[type] || [];
-  return list.find(c=>c.name===name);
+function findCat(name, type){ return (categorias[type]||[]).find(c=>c.name===name); }
+function catBadge(name, type, size){
+  const c = findCat(name, type) || {icon:'dots', color:'#E7DFD2'};
+  return `<span class="cat-icon" style="background:${c.color}; ${size?`width:${size}px;height:${size}px;`:''}">${renderIcon(c.icon, size&&size>50?'lg':'')}</span>`;
 }
 
 /* ============ TEMA ============ */
@@ -494,6 +517,11 @@ document.getElementById('darkToggle').addEventListener('change', (e)=>{
   theme = e.target.checked ? 'dark' : 'light';
   localStorage.setItem(K_THEME, theme);
   applyTheme(theme);
+});
+
+/* ============ TAB BAR ICONS ============ */
+document.querySelectorAll('.tab-btn').forEach(b=>{
+  b.insertAdjacentHTML('afterbegin', renderIcon(b.dataset.ic));
 });
 
 /* ============ NAVEGACIÓN DE PESTAÑAS ============ */
@@ -510,14 +538,8 @@ function switchTab(tab){
 tabButtons.forEach(b=> b.addEventListener('click', ()=> switchTab(b.dataset.tab)));
 
 /* ============ RENDER: INICIO ============ */
-function monthRange(date){
-  const y = date.getFullYear(), m = date.getMonth();
-  return { y, m };
-}
-function isInMonth(dateStr, y, m){
-  const d = new Date(dateStr+'T00:00:00');
-  return d.getFullYear()===y && d.getMonth()===m;
-}
+function monthRange(date){ return { y:date.getFullYear(), m:date.getMonth() }; }
+function isInMonth(dateStr, y, m){ const d = new Date(dateStr+'T00:00:00'); return d.getFullYear()===y && d.getMonth()===m; }
 function renderInicio(){
   const now = new Date();
   const {y, m} = monthRange(now);
@@ -530,7 +552,6 @@ function renderInicio(){
   document.getElementById('hOut').textContent = fmtMoney(monthOut);
   document.getElementById('hBal').textContent = fmtMoney(totalBalance);
 
-  // bars: last 6 months net balance evolution (cumulative up to end of each month)
   const bars = document.getElementById('barsChart');
   bars.innerHTML = '';
   const points = [];
@@ -550,24 +571,18 @@ function renderInicio(){
     bars.appendChild(col);
   });
 
-  // categories this month (out)
   const byCat = {};
-  monthEntries.filter(e=>e.type==='out').forEach(e=>{
-    byCat[e.category] = (byCat[e.category]||0) + e.amount;
-  });
+  monthEntries.filter(e=>e.type==='out').forEach(e=>{ byCat[e.category] = (byCat[e.category]||0) + e.amount; });
   const catList = document.getElementById('catList');
   catList.innerHTML = '';
   const entries = Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
   if(entries.length===0){
     catList.innerHTML = '<div class="empty">Aún no hay gastos este mes.</div>';
   } else {
-    entries.forEach(([cat, amt], idx)=>{
-      const c = findCat(cat, 'out');
+    entries.forEach(([cat, amt])=>{
       const row = document.createElement('div');
       row.className = 'cat-row';
-      row.innerHTML = `<span class="cat-icon" style="background:${iconBg(idx)}">${c?c.icon:'🏷️'}</span>
-        <span class="name">${escapeHtml(cat)}</span>
-        <span class="amt out nums">${fmtMoney(amt)}</span>`;
+      row.innerHTML = `${catBadge(cat,'out')}<span class="name">${escapeHtml(cat)}</span><span class="amt out nums">${fmtMoney(amt)}</span>`;
       row.addEventListener('click', ()=> openCatDetail(cat));
       catList.appendChild(row);
     });
@@ -600,14 +615,11 @@ function renderMovimientos(){
       dEl.textContent = new Date(e.date+'T00:00:00').toLocaleDateString('es-ES',{weekday:'long', day:'numeric', month:'long'});
       list.appendChild(dEl);
     }
-    const c = findCat(e.category, e.type);
     const row = document.createElement('div');
     row.className = 'entry';
-    row.innerHTML = `
-      <span class="cat-icon" style="background:${e.type==='in'?'var(--green-soft)':'var(--red-soft)'}">${c?c.icon:'🏷️'}</span>
+    row.innerHTML = `${catBadge(e.category, e.type)}
       <span class="desc"><div class="t">${escapeHtml(e.desc || e.category)}</div><div class="c">${escapeHtml(e.category)}</div></span>
-      <span class="amt nums ${e.type}">${e.type==='in'?'+':'−'} ${fmtMoney(e.amount)}</span>
-    `;
+      <span class="amt nums ${e.type}">${e.type==='in'?'+':'−'} ${fmtMoney(e.amount)}</span>`;
     row.addEventListener('click', ()=> openEntrySheet(e));
     list.appendChild(row);
   });
@@ -618,7 +630,7 @@ const entryOverlay = document.getElementById('entryOverlay');
 function fillCategorySelect(){
   const sel = document.getElementById('catSelect');
   const list = categorias[currentType] || [];
-  sel.innerHTML = list.map(c=>`<option value="${escapeHtml(c.name)}">${c.icon} ${escapeHtml(c.name)}</option>`).join('');
+  sel.innerHTML = list.map(c=>`<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`).join('');
 }
 function setTypeButtons(){
   document.getElementById('typeInBtn').classList.toggle('active', currentType==='in');
@@ -680,19 +692,21 @@ function openCatDetail(catName){
   const monthOut = movimientos.filter(e=> e.type==='out' && e.category===catName && isInMonth(e.date,y,m));
   const spent = monthOut.reduce((s,e)=>s+e.amount,0);
 
+  const badgeHtml = catBadge(catName, 'out', 64);
   const budgetHtml = document.getElementById('catDetailBudget');
   const relevantBudget = presupuestos.find(b=> b.scope==='categorias' && b.items.some(it=>it.category===catName));
   if(relevantBudget){
     const item = relevantBudget.items.find(it=>it.category===catName);
     const pct = Math.min(100, Math.round((spent/item.amount)*100)) || 0;
-    budgetHtml.innerHTML = `
-      <div style="text-align:center; margin-bottom:14px;">
-        <div class="nums" style="font-size:1.8rem; font-weight:800;">${fmtMoney(spent)}</div>
-        <div style="color:var(--ink-soft); font-size:.82rem;">de ${fmtMoney(item.amount)}</div>
-        <div class="progress-track" style="margin-top:10px;"><div class="progress-fill ${spent>item.amount?'over':''}" style="width:${pct}%"></div></div>
-      </div>`;
+    budgetHtml.innerHTML = `<div style="text-align:center; margin-bottom:16px;">
+      <div style="display:flex; justify-content:center; margin-bottom:10px;">${badgeHtml}</div>
+      <div class="nums" style="font-size:1.8rem; font-weight:800;">${fmtMoney(spent)}</div>
+      <div style="color:var(--ink-soft); font-size:.82rem;">de ${fmtMoney(item.amount)}</div>
+      <div class="progress-track" style="margin-top:10px;"><div class="progress-fill ${spent>item.amount?'over':''}" style="width:${pct}%"></div></div>
+    </div>`;
   } else {
-    budgetHtml.innerHTML = `<div style="text-align:center; margin-bottom:14px;">
+    budgetHtml.innerHTML = `<div style="text-align:center; margin-bottom:16px;">
+      <div style="display:flex; justify-content:center; margin-bottom:10px;">${badgeHtml}</div>
       <div class="nums" style="font-size:1.8rem; font-weight:800;">${fmtMoney(spent)}</div>
       <div style="color:var(--ink-soft); font-size:.82rem;">gastado este mes · sin presupuesto asignado</div>
     </div>`;
@@ -706,7 +720,7 @@ function openCatDetail(catName){
     monthOut.sort((a,b)=>b.date.localeCompare(a.date)).forEach(e=>{
       const row = document.createElement('div');
       row.className = 'entry';
-      row.innerHTML = `<span class="cat-icon" style="background:var(--red-soft)">${(findCat(e.category,'out')||{}).icon||'🏷️'}</span>
+      row.innerHTML = `${catBadge(e.category,'out')}
         <span class="desc"><div class="t">${escapeHtml(e.desc||e.category)}</div><div class="c">${new Date(e.date+'T00:00:00').toLocaleDateString('es-ES',{day:'numeric',month:'short'})}</div></span>
         <span class="amt out nums">− ${fmtMoney(e.amount)}</span>`;
       row.addEventListener('click', ()=>{ catDetailOverlay.classList.remove('open'); openEntrySheet(e); });
@@ -741,8 +755,7 @@ function renderBudgets(){
   const listEl = document.getElementById('budgetList');
   listEl.innerHTML = '';
   if(presupuestos.length===0){
-    listEl.innerHTML = `<div class="empty-cta">Aún no has creado ningún presupuesto.<br>
-      <button class="btn-outline" id="emptyNewBudget">Crear presupuesto</button></div>`;
+    listEl.innerHTML = `<div class="empty-cta">Aún no has creado ningún presupuesto.<br><button class="btn-outline" id="emptyNewBudget">Crear presupuesto</button></div>`;
     document.getElementById('emptyNewBudget').addEventListener('click', openBudgetSheet);
   }
   presupuestos.forEach(b=>{
@@ -754,8 +767,7 @@ function renderBudgets(){
       card.innerHTML = `
         <div class="top-row"><div><h4>${escapeHtml(b.name)}</h4><div class="period">${b.period}</div></div><button class="del">✕</button></div>
         <div class="progress-track"><div class="progress-fill ${spent>b.amount?'over':''}" style="width:${pct}%"></div></div>
-        <div class="meta"><span class="nums">${fmtMoney(spent)}</span><span class="nums">de ${fmtMoney(b.amount)}</span></div>
-      `;
+        <div class="meta"><span class="nums">${fmtMoney(spent)}</span><span class="nums">de ${fmtMoney(b.amount)}</span></div>`;
     } else {
       const items = budgetSpent(b);
       const totalAmt = items.reduce((s,i)=>s+i.amount,0);
@@ -765,8 +777,7 @@ function renderBudgets(){
         <div class="top-row"><div><h4>${escapeHtml(b.name)}</h4><div class="period">${b.period} · por categorías</div></div><button class="del">✕</button></div>
         <div class="progress-track"><div class="progress-fill ${totalSpent>totalAmt?'over':''}" style="width:${pct}%"></div></div>
         <div class="meta"><span class="nums">${fmtMoney(totalSpent)}</span><span class="nums">de ${fmtMoney(totalAmt)}</span></div>
-        ${items.map(i=>`<div class="cat-line"><span>${escapeHtml(i.category)}</span><span class="nums">${fmtMoney(i.spent)} / ${fmtMoney(i.amount)}</span></div>`).join('')}
-      `;
+        ${items.map(i=>`<div class="cat-line">${catBadge(i.category,'out',30)}<span class="cn">${escapeHtml(i.category)}</span><span class="nums">${fmtMoney(i.spent)} / ${fmtMoney(i.amount)}</span></div>`).join('')}`;
     }
     card.querySelector('.del').addEventListener('click', ()=>{
       presupuestos = presupuestos.filter(x=>x.id!==b.id);
@@ -793,7 +804,7 @@ function renderBudgetCatRows(){
   categorias.out.forEach(c=>{
     const row = document.createElement('div');
     row.className = 'cat-item-row';
-    row.innerHTML = `<span>${c.icon}</span><span class="cname">${escapeHtml(c.name)}</span><input class="nums bcat-amt" data-cat="${escapeHtml(c.name)}" inputmode="decimal" placeholder="0,00">`;
+    row.innerHTML = `${catBadge(c.name,'out',36)}<span class="cname">${escapeHtml(c.name)}</span><input class="nums bcat-amt" data-cat="${escapeHtml(c.name)}" inputmode="decimal" placeholder="0,00">`;
     wrap.appendChild(row);
   });
   wrap.querySelectorAll('.bcat-amt').forEach(inp=> inp.addEventListener('input', updateBudgetCatTotal));
@@ -859,7 +870,7 @@ document.getElementById('saveBudget').addEventListener('click', ()=>{
 
 /* ============ GESTIONAR CATEGORÍAS ============ */
 const catManageOverlay = document.getElementById('catManageOverlay');
-document.getElementById('openCats').addEventListener('click', ()=>{ editingCatManageType='in'; renderCatManage(); catManageOverlay.classList.add('open'); });
+document.getElementById('openCats').addEventListener('click', ()=>{ editingCatManageType='in'; renderCatManage(); renderCatPickers(); catManageOverlay.classList.add('open'); });
 document.getElementById('closeCatManage').addEventListener('click', ()=> catManageOverlay.classList.remove('open'));
 catManageOverlay.addEventListener('click', (e)=>{ if(e.target===catManageOverlay) catManageOverlay.classList.remove('open'); });
 document.getElementById('catManageInBtn').addEventListener('click', ()=>{ editingCatManageType='in'; renderCatManage(); });
@@ -873,8 +884,7 @@ function renderCatManage(){
     const inUse = movimientos.some(m=>m.category===c.name && m.type===editingCatManageType);
     const row = document.createElement('div');
     row.className = 'cat-manage-row';
-    row.innerHTML = `<span>${c.icon}</span><span class="name">${escapeHtml(c.name)}</span>
-      ${inUse ? '' : '<button class="del">Eliminar</button>'}`;
+    row.innerHTML = `${catBadge(c.name, editingCatManageType, 36)}<span class="name">${escapeHtml(c.name)}</span>${inUse ? '' : '<button class="del">Eliminar</button>'}`;
     if(!inUse){
       row.querySelector('.del').addEventListener('click', ()=>{
         categorias[editingCatManageType].splice(idx,1);
@@ -885,13 +895,19 @@ function renderCatManage(){
     wrap.appendChild(row);
   });
 }
+function renderCatPickers(){
+  const iw = document.getElementById('newCatIconPicker');
+  iw.innerHTML = ICON_KEYS.map(k=>`<button type="button" data-icon="${k}" class="${k===newCatIcon?'active':''}">${renderIcon(k)}</button>`).join('');
+  iw.querySelectorAll('button').forEach(b=> b.addEventListener('click', ()=>{ newCatIcon=b.dataset.icon; renderCatPickers(); }));
+  const cw = document.getElementById('newCatColorPicker');
+  cw.innerHTML = COLOR_PALETTE.map(c=>`<button type="button" data-color="${c}" style="background:${c}" class="${c===newCatColor?'active':''}"></button>`).join('');
+  cw.querySelectorAll('button').forEach(b=> b.addEventListener('click', ()=>{ newCatColor=b.dataset.color; renderCatPickers(); }));
+}
 document.getElementById('addCatBtn').addEventListener('click', ()=>{
-  const emoji = document.getElementById('newCatEmoji').value.trim() || '🏷️';
   const name = document.getElementById('newCatName').value.trim();
   if(!name){ toast('Ponle un nombre a la categoría'); return; }
-  categorias[editingCatManageType].push({ name, icon: emoji });
+  categorias[editingCatManageType].push({ name, icon:newCatIcon, color:newCatColor });
   save(K_CAT, categorias);
-  document.getElementById('newCatEmoji').value = '';
   document.getElementById('newCatName').value = '';
   renderCatManage();
   toast('Categoría añadida');
