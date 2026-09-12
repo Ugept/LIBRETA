@@ -178,6 +178,16 @@ svg.ico.lg{width:34px; height:34px; stroke-width:1.6;}
 .switch input:checked + .track:before{transform:translateX(20px);}
 
 .cat-manage-row{display:flex; align-items:center; gap:12px; padding:11px 4px; border-bottom:1px solid var(--rule);}
+
+.concept-row{background:var(--card); border-radius:var(--radius-sm); padding:14px; margin-bottom:10px; box-shadow:0 3px 12px var(--shadow);}
+.concept-row .cr-top{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:3px; gap:8px;}
+.concept-row .cr-name{font-weight:700; font-size:.92rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.concept-row .cr-count{font-size:.75rem; color:var(--ink-soft); flex:none;}
+.concept-row .cr-current{font-size:.75rem; color:var(--ink-soft); margin-bottom:10px;}
+.concept-row .cr-row{display:flex; gap:8px;}
+.concept-row .cr-row select{flex:1;}
+.concept-row .cr-row button{white-space:nowrap; padding:0 16px; border-radius:12px; border:none; background:var(--primary); color:#fff; font-weight:700; font-size:.85rem; cursor:pointer;}
+.concept-row.applied{opacity:.55;}
 .cat-manage-row:last-child{border-bottom:none;}
 .cat-manage-row .name{flex:1; font-size:.9rem; font-weight:600;}
 .cat-manage-row .del{background:none;border:none;color:var(--red);font-size:.8rem;cursor:pointer; font-weight:600;}
@@ -352,6 +362,7 @@ input[type=file]{display:none;}
   </div>
   <div class="more-group">
     <div class="more-item"><button class="item-btn" id="openCats">Gestionar categorías <span class="chev">›</span></button></div>
+    <div class="more-item"><button class="item-btn" id="openConceptGroups">Categorizar por concepto repetido <span class="chev">›</span></button></div>
     <div class="more-item"><button class="item-btn" id="openBankImport">Importar movimientos (Excel/CSV) <span class="chev">›</span></button></div>
     <div class="more-item"><button class="item-btn" id="exportBtn">Exportar copia de seguridad (.json) <span class="chev">›</span></button></div>
     <div class="more-item"><button class="item-btn" id="importBtn">Importar copia de seguridad <span class="chev">›</span></button></div>
@@ -454,6 +465,17 @@ input[type=file]{display:none;}
     </div>
     <div class="sheet-actions">
       <button class="btn ghost" id="closeCatManage">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="conceptOverlay">
+  <div class="sheet">
+    <h2>Categorizar por concepto repetido</h2>
+    <p class="hint" style="margin-bottom:14px;">Estos conceptos aparecen en más de un movimiento. Elige una categoría y aplícala a todos los que tengan ese mismo texto de una vez.</p>
+    <div id="conceptList"></div>
+    <div class="sheet-actions">
+      <button class="btn ghost" id="closeConceptGroups">Cerrar</button>
     </div>
   </div>
 </div>
@@ -859,6 +881,13 @@ function openEntrySheet(entry, presetCategory){
 }
 function closeEntrySheet(){ entryOverlay.classList.remove('open'); editingId = null; }
 document.getElementById('typeInBtn').addEventListener('click', ()=>{ currentType='in'; setTypeButtons(); fillCategorySelect(); });
+document.getElementById('descInput').addEventListener('blur', ()=>{
+  if(editingId) return;
+  const desc = document.getElementById('descInput').value.trim();
+  if(!desc) return;
+  const learned = conceptMap[conceptKey(currentType, desc)];
+  if(learned) document.getElementById('catSelect').value = learned;
+});
 document.getElementById('typeOutBtn').addEventListener('click', ()=>{ currentType='out'; setTypeButtons(); fillCategorySelect(); });
 document.getElementById('addBtn').addEventListener('click', ()=> openEntrySheet(null));
 document.getElementById('cancelBtn').addEventListener('click', closeEntrySheet);
@@ -1121,6 +1150,63 @@ document.getElementById('addCatBtn').addEventListener('click', ()=>{
   toast('Categoría añadida');
 });
 
+/* ============ CATEGORIZAR POR CONCEPTO REPETIDO ============ */
+const K_CONCEPT_MAP = 'libreta.conceptmap.v1';
+let conceptMap = load(K_CONCEPT_MAP, {});
+const conceptOverlay = document.getElementById('conceptOverlay');
+
+function conceptKey(type, desc){ return type + '|' + (desc||'').trim().toLowerCase(); }
+
+function buildConceptGroups(){
+  const map = {};
+  movimientos.forEach(e=>{
+    const d = (e.desc||'').trim();
+    if(!d) return;
+    const key = conceptKey(e.type, d);
+    if(!map[key]) map[key] = { type:e.type, desc:d, items:[], cats:new Set() };
+    map[key].items.push(e);
+    map[key].cats.add(e.category);
+  });
+  return Object.values(map).filter(g=>g.items.length>=2).sort((a,b)=> b.items.length - a.items.length);
+}
+function renderConceptGroups(){
+  const wrap = document.getElementById('conceptList');
+  const groups = buildConceptGroups();
+  if(groups.length===0){
+    wrap.innerHTML = '<div class="empty">Aún no hay conceptos repetidos. Aparecerán aquí en cuanto tengas dos o más movimientos con el mismo texto.</div>';
+    return;
+  }
+  wrap.innerHTML = '';
+  groups.forEach(g=>{
+    const catNames = categorias[g.type] || [];
+    const currentCat = g.cats.size===1 ? [...g.cats][0] : null;
+    const row = document.createElement('div');
+    row.className = 'concept-row';
+    row.innerHTML = `
+      <div class="cr-top"><span class="cr-name">${escapeHtml(g.desc)}</span><span class="cr-count">${g.items.length} mov.</span></div>
+      <div class="cr-current">${currentCat ? 'Ahora: '+escapeHtml(currentCat) : 'Categorías mezcladas actualmente'} · ${g.type==='in'?'ingreso':'gasto'}</div>
+      <div class="cr-row">
+        <select class="cr-select">${catNames.map(c=>`<option value="${escapeHtml(c.name)}" ${c.name===currentCat?'selected':''}>${escapeHtml(c.name)}</option>`).join('')}</select>
+        <button class="cr-apply">Aplicar a los ${g.items.length}</button>
+      </div>
+    `;
+    row.querySelector('.cr-apply').addEventListener('click', ()=>{
+      const chosen = row.querySelector('.cr-select').value;
+      g.items.forEach(item=> item.category = chosen);
+      conceptMap[conceptKey(g.type, g.desc)] = chosen;
+      save(K_MOV, movimientos);
+      save(K_CONCEPT_MAP, conceptMap);
+      renderInicio(); renderMovimientos(); renderBudgets();
+      toast('Categoría aplicada a ' + g.items.length + ' movimientos');
+      renderConceptGroups();
+    });
+    wrap.appendChild(row);
+  });
+}
+document.getElementById('openConceptGroups').addEventListener('click', ()=>{ renderConceptGroups(); conceptOverlay.classList.add('open'); });
+document.getElementById('closeConceptGroups').addEventListener('click', ()=> conceptOverlay.classList.remove('open'));
+conceptOverlay.addEventListener('click', (e)=>{ if(e.target===conceptOverlay) conceptOverlay.classList.remove('open'); });
+
 /* ============ EXPORT / IMPORT ============ */
 document.getElementById('exportBtn').addEventListener('click', ()=>{
   const data = { movimientos, categorias, presupuestos };
@@ -1267,6 +1353,8 @@ document.getElementById('bankPreviewBtn').addEventListener('click', ()=>{
     const type = amt < 0 ? 'out' : 'in';
     const desc = (includeDesc && descIdx>=0 && row[descIdx]!==undefined) ? String(row[descIdx]).trim() : '';
     let category = type==='in' ? 'Otro ingreso' : 'Otro gasto';
+    const learned = conceptMap[conceptKey(type, desc)];
+    if(learned) category = learned;
     if(includeCat && catIdx>=0 && row[catIdx]) category = String(row[catIdx]).trim();
     bankPreviewRows.push({ date:dateISO, amount:Math.abs(amt), type, desc, category, include:true });
   });
