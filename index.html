@@ -798,6 +798,7 @@ const K_CAT = 'libreta.categorias.v2';
 const K_BUD = 'libreta.presupuestos.v1';
 const K_THEME = 'libreta.theme.v1';
 const K_INITIAL = 'libreta.saldoinicial.v1';
+const K_LAST_USER = 'libreta.lastuser.v1';
 
 function load(key, fallback){
   try{ const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
@@ -2260,9 +2261,30 @@ function updateCloudUI(user){
     gate.classList.remove('hidden');
   }
 }
+function resetLocalDataToBlank(){
+  movimientos = [];
+  categorias = defaultCategorias();
+  presupuestos = [];
+  saldoInicial = 0;
+  conceptMap = {};
+  suscripciones = [];
+  localStorage.setItem(K_MOV, JSON.stringify(movimientos));
+  localStorage.setItem(K_CAT, JSON.stringify(categorias));
+  localStorage.setItem(K_BUD, JSON.stringify(presupuestos));
+  localStorage.setItem(K_INITIAL, saldoInicial);
+  localStorage.setItem(K_CONCEPT_MAP, JSON.stringify(conceptMap));
+  localStorage.setItem(K_SUBS, JSON.stringify(suscripciones));
+  document.getElementById('initialBalanceInput').value = '';
+}
 async function onSignedIn(user){
   sbUser = user;
   updateCloudUI(user);
+  const lastUser = localStorage.getItem(K_LAST_USER);
+  if(lastUser && lastUser !== user.id){
+    resetLocalDataToBlank();
+    renderInicio(); renderMovimientos(); renderBudgets();
+  }
+  localStorage.setItem(K_LAST_USER, user.id);
   try{
     const { data: existing } = await sb.from('user_data').select('user_id').eq('user_id', user.id).maybeSingle();
     if(existing){
