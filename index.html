@@ -1977,6 +1977,8 @@ function bankShowStage(n){
 }
 document.getElementById('openBankImport').addEventListener('click', ()=>{
   bankShowStage(1);
+  document.getElementById('bankDateFrom').value = '';
+  document.getElementById('bankDateTo').value = '';
   bankImportOverlay.classList.add('open');
 });
 document.getElementById('closeBankImport').addEventListener('click', ()=> bankImportOverlay.classList.remove('open'));
@@ -2133,6 +2135,8 @@ document.getElementById('bankPreviewBtn').addEventListener('click', ()=>{
   }
   if(badDate>0 || badAmount>0){
     toast((badDate+badAmount) + ' fila(s) se han descartado (fecha o importe no reconocidos). Revisa la columna elegida si esperabas más movimientos.');
+  } else if(outOfRange>0){
+    toast(outOfRange + ' fila(s) quedaron fuera porque no entraban en el rango de fechas "Desde/Hasta" que pusiste.');
   }
 
   bankPreviewRows.forEach(r=>{
