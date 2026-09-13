@@ -236,7 +236,11 @@ svg.ico.lg{width:34px; height:34px; stroke-width:1.6;}
 .tab-toggle button.active{background:var(--primary); color:#fff;}
 .tab-toggle-3 button{font-size:.78rem; padding:9px 2px;}
 
-.rec-total-card{background:var(--card); border-radius:var(--radius); padding:18px; margin-bottom:16px; box-shadow:0 6px 18px var(--shadow); text-align:center;}
+.rec-total-card{background:var(--card); border-radius:var(--radius); padding:18px; margin-bottom:16px; box-shadow:0 6px 18px var(--shadow);}
+.rec-total-row{display:flex;}
+.rec-total-row > div{flex:1; text-align:center;}
+.rec-total-row .k{font-size:.72rem; color:var(--ink-soft); margin-bottom:4px;}
+.rec-total-row .v{font-size:1.5rem; font-weight:800;}
 .rec-total-card .k{font-size:.75rem; color:var(--ink-soft); margin-bottom:4px;}
 .rec-total-card .v{font-size:1.7rem; font-weight:800;}
 .rec-row{display:flex; align-items:center; gap:12px; background:var(--card); border-radius:var(--radius-sm); padding:13px 14px; margin-bottom:8px; box-shadow:0 3px 12px var(--shadow); cursor:pointer;}
@@ -323,7 +327,10 @@ body{ padding-bottom:calc(230px + env(safe-area-inset-bottom)); }
   box-sizing:border-box;
 }
 .month-nav > *{min-width:0;}
-input[type=date]{max-width:100%; min-width:0;}
+input[type=date]{
+  max-width:100%; width:100%; min-width:0; box-sizing:border-box;
+  font-size:.92rem; padding:11px 8px; appearance:none; -webkit-appearance:none;
+}
 .sheet h2{margin:2px 0 18px; font-size:1.12rem; font-weight:800;}
 .sheet-header{display:flex; align-items:center; gap:10px; margin-bottom:4px;}
 .sheet-header h2{margin:0;}
@@ -1780,7 +1787,13 @@ function recFrequencyLabel(rec){
 function renderRecibos(){
   const wrap = document.getElementById('recibosView');
   const totalAnual = suscripciones.reduce((s,r)=> s + r.amount * recOccurrencesPerYear(r), 0);
-  let html = `<div class="rec-total-card"><div class="k">gasto anual en recibos y suscripciones</div><div class="v nums">${fmtMoney(totalAnual)}</div></div>`;
+  const totalMensual = totalAnual / 12;
+  let html = `<div class="rec-total-card">
+    <div class="rec-total-row">
+      <div><div class="k">al mes (medio)</div><div class="v nums">${fmtMoney(totalMensual)}</div></div>
+      <div><div class="k">al año</div><div class="v nums">${fmtMoney(totalAnual)}</div></div>
+    </div>
+  </div>`;
   if(suscripciones.length===0){
     html += '<div class="empty">Aún no has añadido ningún recibo o suscripción.</div>';
   } else {
@@ -1788,10 +1801,12 @@ function renderRecibos(){
       const cat = rec.category ? findCat(rec.category,'out') : null;
       const iconMarkup = cat ? catIconMarkup(cat) : renderIcon('repeat');
       const bg = cat ? cat.color : 'var(--primary-soft)';
+      const mensual = (rec.amount * recOccurrencesPerYear(rec)) / 12;
+      const mensualLabel = rec.frequency==='mensual' ? fmtMoney(mensual)+'/mes' : '≈ '+fmtMoney(mensual)+'/mes';
       html += `<div class="rec-row" data-id="${rec.id}">
         <span class="cat-icon" style="background:${bg}">${iconMarkup}</span>
         <span class="desc"><div class="t">${escapeHtml(rec.name)}</div><div class="c">${recFrequencyLabel(rec)}${rec.category?' · '+escapeHtml(rec.category):''}</div></span>
-        <span class="amt"><div class="a1 nums">${fmtMoney(rec.amount)}</div><div class="a2 nums">${fmtMoney(rec.amount*recOccurrencesPerYear(rec))}/año</div></span>
+        <span class="amt"><div class="a1 nums">${fmtMoney(rec.amount)}</div><div class="a2 nums">${mensualLabel}</div></span>
       </div>`;
     });
   }
@@ -2246,9 +2261,7 @@ function scheduleCloudSync(){
 function flushCloudSyncNow(){
   if(!sb || !sbUser) return;
   clearTimeout(cloudSyncTimer);
-  const lastEdit = parseInt(localStorage.getItem(K_LAST_EDIT)) || 0;
-  const lastPush = parseInt(localStorage.getItem(K_LAST_PUSH)) || 0;
-  if(lastEdit > lastPush){ pushAllToCloud().catch(()=>{}); }
+  pushAllToCloud().catch(()=>{});
 }
 document.addEventListener('visibilitychange', ()=>{ if(document.hidden) flushCloudSyncNow(); });
 window.addEventListener('pagehide', flushCloudSyncNow);
@@ -2267,10 +2280,21 @@ async function pushAllToCloud(){
     theme,
     updated_at: new Date().toISOString()
   });
+  const localIds = movimientos.map(m=>m.id);
   if(movimientos.length){
     const rows = movimientos.map(m=> ({ id:m.id, user_id:sbUser.id, type:m.type, amount:m.amount, description:m.desc||'', category:m.category, date:m.date, created:m.created }));
     for(let i=0;i<rows.length;i+=400){
       await sb.from('movimientos').upsert(rows.slice(i, i+400));
+    }
+  }
+  // Reconciliar borrados: cualquier movimiento que exista en la nube pero ya no esté
+  // en local (aunque el borrado individual no llegara a completarse) se elimina aquí,
+  // para que una subida completa siempre deje la nube exactamente como el dispositivo.
+  const { data: remoteRows } = await sb.from('movimientos').select('id').eq('user_id', sbUser.id);
+  if(remoteRows){
+    const toDelete = remoteRows.map(r=>r.id).filter(id=> !localIds.includes(id));
+    for(let i=0;i<toDelete.length;i+=400){
+      await sb.from('movimientos').delete().in('id', toDelete.slice(i,i+400)).eq('user_id', sbUser.id);
     }
   }
   localStorage.setItem(K_LAST_PUSH, String(Date.now()));
@@ -2343,23 +2367,20 @@ async function onSignedIn(user){
     renderInicio(); renderMovimientos(); renderBudgets();
   }
   localStorage.setItem(K_LAST_USER, user.id);
+  const hasLocalData = movimientos.length>0 || presupuestos.length>0 || suscripciones.length>0;
   try{
-    const lastEdit = parseInt(localStorage.getItem(K_LAST_EDIT)) || 0;
-    const lastPush = parseInt(localStorage.getItem(K_LAST_PUSH)) || 0;
-    if(lastEdit > lastPush){
-      // Hay cambios hechos en este dispositivo que todavía no se habían subido: los subimos
-      // primero para no perderlos, en vez de traer una copia más antigua de la nube.
+    if(hasLocalData){
+      // Este dispositivo ya tiene datos reales: son la fuente de la verdad.
+      // Nunca los sustituimos por una copia de la nube que podría estar desactualizada
+      // (por ejemplo, si la última subida no llegó a completarse a tiempo).
       await pushAllToCloud();
-      toast('Tus cambios pendientes se han subido a la nube');
-      return;
-    }
-    const { data: existing } = await sb.from('user_data').select('user_id').eq('user_id', user.id).maybeSingle();
-    if(existing){
-      await pullFromCloud();
-      toast('Datos sincronizados desde la nube');
+      toast('Tus datos se han sincronizado con la nube');
     } else {
-      await pushAllToCloud();
-      toast('Tus datos se han subido a la nube');
+      const { data: existing } = await sb.from('user_data').select('user_id').eq('user_id', user.id).maybeSingle();
+      if(existing){
+        await pullFromCloud();
+        toast('Datos sincronizados desde la nube');
+      }
     }
   }catch(err){ console.error(err); }
 }
