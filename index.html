@@ -12,6 +12,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
   --bg:#F5EFE6; --card:#FFFFFF; --ink:#2B2420; --ink-soft:#8A7F72;
@@ -51,7 +52,7 @@ svg.ico.lg{width:34px; height:34px; stroke-width:1.6;}
 .topbar h1{margin:0; font-size:1.2rem; font-weight:800; letter-spacing:-.01em;}
 .topbar .spacer{width:28px;}
 
-.page{display:none; padding:0 18px 24px;}
+.page{display:none; padding:0 18px 60px;}
 .page.active{display:block;}
 
 /* ---- Inicio ---- */
@@ -233,7 +234,7 @@ svg.ico.lg{width:34px; height:34px; stroke-width:1.6;}
 .color-picker button.active{border-color:var(--ink);}
 
 /* ---- bottom tab bar: floating translucent pill (estilo Apple) ---- */
-body{ padding-bottom:calc(96px + env(safe-area-inset-bottom)); }
+body{ padding-bottom:calc(150px + env(safe-area-inset-bottom)); }
 .tabbar{
   position:fixed; left:14px; right:14px; bottom:calc(14px + env(safe-area-inset-bottom));
   background:rgba(255,255,255,.62); -webkit-backdrop-filter:blur(22px) saturate(1.6); backdrop-filter:blur(22px) saturate(1.6);
@@ -369,12 +370,12 @@ input[type=file]{display:none;}
     <button id="nextMonth">›</button>
   </div>
 
-  <div id="rangePickerRow" style="display:none; margin-bottom:16px;">
-    <div style="display:flex; gap:10px;">
-      <div style="flex:1;"><label>Desde</label><input type="date" id="rangeFromInput"></div>
-      <div style="flex:1;"><label>Hasta</label><input type="date" id="rangeToInput"></div>
-    </div>
-    <button class="btn primary" id="rangeApplyBtn" style="width:100%; margin-top:10px;">Aplicar rango</button>
+  <div id="rangePickerRow" style="display:none; margin-bottom:18px;">
+    <label style="margin-top:0;">Desde</label>
+    <input type="date" id="rangeFromInput">
+    <label>Hasta</label>
+    <input type="date" id="rangeToInput">
+    <button class="btn primary" id="rangeApplyBtn" style="width:100%; margin-top:14px;">Aplicar rango</button>
   </div>
 
   <div class="tab-toggle">
@@ -423,6 +424,17 @@ input[type=file]{display:none;}
 <!-- ===== MÁS ===== -->
 <section class="page" id="page-mas">
   <div class="topbar"><h1>Más</h1><span class="spacer"></span></div>
+  <div class="more-group">
+    <div class="more-item more-item-col">
+      <span>Copia en la nube</span>
+      <p class="hint" id="cloudStatus">Tus datos solo están guardados en este dispositivo.</p>
+      <div id="cloudLoginForm">
+        <input type="email" id="cloudEmailInput" placeholder="tu@email.com" autocomplete="email" autocapitalize="off">
+        <button class="btn primary" id="cloudSendLinkBtn" style="width:100%; margin-top:8px;">Enviar enlace mágico</button>
+      </div>
+      <button class="btn ghost" id="cloudSignOutBtn" style="width:100%; margin-top:8px; display:none;">Cerrar sesión en este dispositivo</button>
+    </div>
+  </div>
   <div class="more-group">
     <div class="more-item"><span>Modo oscuro</span><label class="switch"><input type="checkbox" id="darkToggle"><span class="track"></span></label></div>
   </div>
@@ -686,7 +698,7 @@ function load(key, fallback){
   try{ const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
   catch(e){ return fallback; }
 }
-function save(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
+function save(key, val){ localStorage.setItem(key, JSON.stringify(val)); scheduleCloudSync(); }
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 function fmtMoney(n){ return n.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' €'; }
 function todayISO(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
@@ -991,8 +1003,10 @@ document.getElementById('bulkDelete').addEventListener('click', ()=>{
   const n = selectedIds.size;
   if(n===0){ toast('No has seleccionado ningún movimiento'); return; }
   if(!confirm(`¿Eliminar ${n} movimiento${n===1?'':'s'}? Esta acción no se puede deshacer.`)) return;
+  const idsToDelete = [...selectedIds];
   movimientos = movimientos.filter(m=> !selectedIds.has(m.id));
   save(K_MOV, movimientos);
+  cloudDeleteMovimientos(idsToDelete);
   selectedIds = new Set();
   renderMovimientos(); renderInicio(); renderBudgets();
   updateBulkBar();
@@ -1173,8 +1187,10 @@ document.getElementById('saveBtn').addEventListener('click', ()=>{
 });
 document.getElementById('deleteBtn').addEventListener('click', ()=>{
   if(!editingId) return;
+  const idToDelete = editingId;
   movimientos = movimientos.filter(m=>m.id!==editingId);
   save(K_MOV, movimientos);
+  cloudDeleteMovimientos([idToDelete]);
   closeEntrySheet();
   renderInicio(); renderMovimientos(); renderBudgets();
   toast('Movimiento eliminado');
@@ -1832,6 +1848,129 @@ document.getElementById('installBtn').addEventListener('click', async ()=>{
 if('serviceWorker' in navigator){
   window.addEventListener('load', ()=> navigator.serviceWorker.register('sw.js').catch(()=>{}));
 }
+
+/* ============ SUPABASE: copia en la nube ============ */
+const SUPABASE_URL = 'https://vuaivjbdnuzvvoxlgxrd.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_ylbzq5Ajf6Nch5VLfEekjg_Kh7g05pD';
+let sb = null;
+let sbUser = null;
+let cloudSyncTimer = null;
+
+try{
+  if(typeof supabase !== 'undefined'){
+    sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  }
+}catch(err){ console.error('Supabase no disponible', err); }
+
+function scheduleCloudSync(){
+  if(!sb || !sbUser) return;
+  clearTimeout(cloudSyncTimer);
+  cloudSyncTimer = setTimeout(()=>{ pushAllToCloud().catch(err=> console.error(err)); }, 1200);
+}
+function cloudDeleteMovimientos(ids){
+  if(!sb || !sbUser || !ids.length) return;
+  sb.from('movimientos').delete().in('id', ids).eq('user_id', sbUser.id).then(()=>{}).catch(err=> console.error(err));
+}
+async function pushAllToCloud(){
+  if(!sb || !sbUser) return;
+  await sb.from('user_data').upsert({
+    user_id: sbUser.id,
+    categorias, presupuestos,
+    saldo_inicial: saldoInicial,
+    concept_map: conceptMap,
+    theme,
+    updated_at: new Date().toISOString()
+  });
+  if(movimientos.length){
+    const rows = movimientos.map(m=> ({ id:m.id, user_id:sbUser.id, type:m.type, amount:m.amount, description:m.desc||'', category:m.category, date:m.date, created:m.created }));
+    for(let i=0;i<rows.length;i+=400){
+      await sb.from('movimientos').upsert(rows.slice(i, i+400));
+    }
+  }
+}
+async function pullFromCloud(){
+  if(!sb || !sbUser) return;
+  const { data: ud } = await sb.from('user_data').select('*').eq('user_id', sbUser.id).maybeSingle();
+  if(ud){
+    if(ud.categorias) categorias = ud.categorias;
+    if(ud.presupuestos) presupuestos = ud.presupuestos;
+    if(ud.saldo_inicial !== null && ud.saldo_inicial !== undefined) saldoInicial = Number(ud.saldo_inicial);
+    if(ud.concept_map) conceptMap = ud.concept_map;
+    if(ud.theme) theme = ud.theme;
+    localStorage.setItem(K_CAT, JSON.stringify(categorias));
+    localStorage.setItem(K_BUD, JSON.stringify(presupuestos));
+    localStorage.setItem(K_INITIAL, saldoInicial);
+    localStorage.setItem(K_CONCEPT_MAP, JSON.stringify(conceptMap));
+    localStorage.setItem(K_THEME, theme);
+    applyTheme(theme);
+    document.getElementById('initialBalanceInput').value = saldoInicial ? String(saldoInicial).replace('.', ',') : '';
+  }
+  const { data: movs } = await sb.from('movimientos').select('*').eq('user_id', sbUser.id);
+  if(movs){
+    movimientos = movs.map(r=> ({ id:r.id, type:r.type, amount:Number(r.amount), desc:r.description||'', category:r.category, date:r.date, created:Number(r.created) }));
+    localStorage.setItem(K_MOV, JSON.stringify(movimientos));
+  }
+  renderInicio(); renderMovimientos(); renderBudgets();
+}
+function updateCloudUI(user){
+  const statusEl = document.getElementById('cloudStatus');
+  const form = document.getElementById('cloudLoginForm');
+  const signOutBtn = document.getElementById('cloudSignOutBtn');
+  if(user){
+    statusEl.textContent = 'Sincronizado con ' + (user.email || 'tu cuenta') + '.';
+    form.style.display = 'none';
+    signOutBtn.style.display = 'block';
+  } else {
+    statusEl.textContent = 'Tus datos solo están guardados en este dispositivo.';
+    form.style.display = 'block';
+    signOutBtn.style.display = 'none';
+  }
+}
+async function onSignedIn(user){
+  sbUser = user;
+  updateCloudUI(user);
+  try{
+    const { data: existing } = await sb.from('user_data').select('user_id').eq('user_id', user.id).maybeSingle();
+    if(existing){
+      await pullFromCloud();
+      toast('Datos sincronizados desde la nube');
+    } else {
+      await pushAllToCloud();
+      toast('Tus datos se han subido a la nube');
+    }
+  }catch(err){ console.error(err); }
+}
+if(sb){
+  sb.auth.getSession().then(({data})=>{
+    if(data && data.session && data.session.user) onSignedIn(data.session.user);
+  });
+  sb.auth.onAuthStateChange((event, session)=>{
+    if(event==='SIGNED_IN' && session && session.user){ onSignedIn(session.user); }
+    else if(event==='SIGNED_OUT'){ sbUser = null; updateCloudUI(null); }
+  });
+}
+document.getElementById('cloudSendLinkBtn').addEventListener('click', async ()=>{
+  if(!sb){ toast('No se pudo cargar la conexión con la nube (revisa tu internet)'); return; }
+  const email = document.getElementById('cloudEmailInput').value.trim();
+  if(!email){ toast('Escribe tu email'); return; }
+  const btn = document.getElementById('cloudSendLinkBtn');
+  btn.disabled = true; btn.textContent = 'Enviando…';
+  try{
+    const redirectTo = window.location.href.split('#')[0].split('?')[0];
+    const { error } = await sb.auth.signInWithOtp({ email, options:{ emailRedirectTo: redirectTo } });
+    if(error) throw error;
+    document.getElementById('cloudStatus').textContent = 'Te hemos enviado un enlace a ' + email + '. Ábrelo desde este mismo iPhone.';
+  }catch(err){
+    toast('No se pudo enviar el enlace');
+    console.error(err);
+  }
+  btn.disabled = false; btn.textContent = 'Enviar enlace mágico';
+});
+document.getElementById('cloudSignOutBtn').addEventListener('click', async ()=>{
+  if(!sb) return;
+  await sb.auth.signOut();
+  toast('Sesión cerrada en este dispositivo');
+});
 
 /* ============ INICIO ============ */
 renderInicio();
