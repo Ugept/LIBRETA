@@ -35,7 +35,7 @@ body{
   margin:0; background:var(--bg); color:var(--ink);
   font-family:'Inter', system-ui, sans-serif;
   -webkit-font-smoothing:antialiased;
-  overscroll-behavior-y:none;
+  overscroll-behavior-x:none;
   padding-bottom:calc(72px + env(safe-area-inset-bottom));
   transition:background .2s, color .2s;
 }
@@ -62,6 +62,17 @@ svg.ico.lg{width:34px; height:34px; stroke-width:1.6;}
 
 .page{display:none; padding:0 18px 100px;}
 .page.active{display:block;}
+
+.auth-gate{
+  position:fixed; inset:0; background:var(--bg); z-index:200;
+  display:flex; align-items:center; justify-content:center; padding:24px;
+}
+.auth-gate.hidden{display:none;}
+.auth-box{width:100%; max-width:360px;}
+.auth-box h1{margin:0 0 6px; font-size:2.1rem; font-weight:800; text-align:center; letter-spacing:-.01em;}
+.auth-icon{width:64px; height:64px; border-radius:20px; background:var(--primary-soft); margin:0 auto 16px; display:flex; align-items:center; justify-content:center;}
+.auth-icon svg.ico{width:32px; height:32px; stroke:var(--primary);}
+.auth-error{color:var(--red); font-size:.8rem; min-height:1em; margin:8px 2px 0; text-align:center;}
 
 /* ---- Inicio ---- */
 
@@ -171,6 +182,7 @@ svg.ico.lg{width:34px; height:34px; stroke-width:1.6;}
 .budget-card h4{margin:0 0 2px; font-size:1.02rem; font-weight:800;}
 .budget-card .period{font-size:.72rem; color:var(--ink-soft); text-transform:capitalize;}
 .budget-card .del{background:none;border:none;color:var(--ink-soft);font-size:1.1rem;cursor:pointer;}
+.budget-card .hist-btn{background:none;border:none;color:var(--primary);font-size:.78rem;font-weight:700;cursor:pointer;}
 .progress-track{background:var(--rule); border-radius:8px; height:9px; overflow:hidden; margin:7px 0 7px;}
 .progress-fill{height:100%; background:var(--primary); border-radius:8px;}
 .progress-fill.over{background:var(--red);}
@@ -222,6 +234,19 @@ svg.ico.lg{width:34px; height:34px; stroke-width:1.6;}
 .tab-toggle{display:flex; background:var(--bg); border-radius:12px; padding:3px; margin-bottom:14px;}
 .tab-toggle button{flex:1;border:none;background:none;padding:9px 0;border-radius:9px;font-size:.85rem;font-weight:700;color:var(--ink-soft);cursor:pointer;}
 .tab-toggle button.active{background:var(--primary); color:#fff;}
+.tab-toggle-3 button{font-size:.78rem; padding:9px 2px;}
+
+.rec-total-card{background:var(--card); border-radius:var(--radius); padding:18px; margin-bottom:16px; box-shadow:0 6px 18px var(--shadow); text-align:center;}
+.rec-total-card .k{font-size:.75rem; color:var(--ink-soft); margin-bottom:4px;}
+.rec-total-card .v{font-size:1.7rem; font-weight:800;}
+.rec-row{display:flex; align-items:center; gap:12px; background:var(--card); border-radius:var(--radius-sm); padding:13px 14px; margin-bottom:8px; box-shadow:0 3px 12px var(--shadow); cursor:pointer;}
+.rec-row .desc{flex:1; min-width:0;}
+.rec-row .desc .t{font-size:.93rem; font-weight:700;}
+.rec-row .desc .c{font-size:.74rem; color:var(--ink-soft);}
+.rec-row .amt{text-align:right;}
+.rec-row .amt .a1{font-size:.93rem; font-weight:700;}
+.rec-row .amt .a2{font-size:.7rem; color:var(--ink-soft);}
+.rec-add-btn{display:block; width:100%; margin-top:4px;}
 
 .icon-picker{display:grid; grid-template-columns:repeat(6,1fr); gap:8px; margin-top:4px;}
 .lucide-search{margin-top:10px; padding-top:10px; border-top:1px dashed var(--rule);}
@@ -294,8 +319,11 @@ body{ padding-bottom:calc(230px + env(safe-area-inset-bottom)); }
 .sheet-overlay.open{display:flex;}
 .sheet{
   background:var(--bg); width:100%; max-width:480px; border-radius:24px 24px 0 0;
-  padding:20px 20px calc(20px + env(safe-area-inset-bottom)); max-height:90vh; overflow-y:auto;
+  padding:20px 20px calc(20px + env(safe-area-inset-bottom)); max-height:90vh; overflow-y:auto; overflow-x:hidden;
+  box-sizing:border-box;
 }
+.month-nav > *{min-width:0;}
+input[type=date]{max-width:100%; min-width:0;}
 .sheet h2{margin:2px 0 18px; font-size:1.12rem; font-weight:800;}
 .sheet-header{display:flex; align-items:center; gap:10px; margin-bottom:4px;}
 .sheet-header h2{margin:0;}
@@ -355,6 +383,19 @@ input[type=file]{display:none;}
 </head>
 <body>
 
+<div class="auth-gate" id="authGate">
+  <div class="auth-box">
+    <div class="auth-icon"></div>
+    <h1>LIBRETA</h1>
+    <p class="hint" style="text-align:center; margin-bottom:20px;">Inicia sesión o crea una cuenta para continuar</p>
+    <input type="email" id="authEmail" placeholder="tu@email.com" autocomplete="email" autocapitalize="off">
+    <input type="password" id="authPassword" placeholder="Contraseña" autocomplete="current-password" style="margin-top:10px;">
+    <p class="auth-error" id="authError"></p>
+    <button class="btn primary" id="authLoginBtn" style="width:100%; margin-top:14px;">Iniciar sesión</button>
+    <button class="btn ghost" id="authSignupBtn" style="width:100%; margin-top:10px;">Crear cuenta</button>
+  </div>
+</div>
+
 <!-- ===== INICIO ===== -->
 <section class="page active" id="page-inicio">
   <div class="topbar"><h1>LIBRETA</h1><span class="spacer"></span></div>
@@ -379,9 +420,10 @@ input[type=file]{display:none;}
   <div class="topbar"><h1>Movimientos</h1><button class="icon-btn" id="openPeriodSettings"></button></div>
   <div class="period-label" id="periodLabelDisplay">—</div>
 
-  <div class="tab-toggle">
+  <div class="tab-toggle tab-toggle-3">
     <button type="button" id="movListBtn" class="active">Lista</button>
     <button type="button" id="movStatsBtn">Estadísticas</button>
+    <button type="button" id="movRecBtn">Recibos</button>
   </div>
 
   <div id="listSection">
@@ -392,7 +434,37 @@ input[type=file]{display:none;}
     <div id="list"></div>
   </div>
   <div id="statsView" style="display:none;"></div>
+  <div id="recibosView" style="display:none;"></div>
 </section>
+
+<div class="sheet-overlay" id="recOverlay">
+  <div class="sheet">
+    <div class="sheet-header"><button class="sheet-back" id="backRecOverlay"></button><h2 id="recTitle">Nuevo recibo</h2></div>
+    <label>Nombre</label>
+    <input id="recName" placeholder="p. ej. Netflix">
+    <label>Importe</label>
+    <input class="nums" id="recAmount" inputmode="decimal" placeholder="0,00">
+    <label>Frecuencia</label>
+    <select id="recFrequency">
+      <option value="mensual">Mensual</option>
+      <option value="trimestral">Trimestral</option>
+      <option value="anual">Anual</option>
+      <option value="personalizado">Personalizado</option>
+    </select>
+    <div id="recCustomDaysRow" style="display:none;">
+      <label>Cada cuántos días</label>
+      <input class="nums" id="recCustomDays" inputmode="numeric" placeholder="45">
+    </div>
+    <label>Categoría (opcional)</label>
+    <select id="recCategory"></select>
+    <div class="sheet-actions">
+      <button class="btn primary" id="recSaveBtn">Guardar</button>
+    </div>
+    <div class="sheet-actions" id="recDeleteRow" style="display:none;">
+      <button class="btn danger" id="recDeleteBtn">Eliminar este recibo</button>
+    </div>
+  </div>
+</div>
 
 <div class="sheet-overlay" id="periodOverlay">
   <div class="sheet">
@@ -449,17 +521,9 @@ input[type=file]{display:none;}
   <div class="topbar"><h1>Más</h1><span class="spacer"></span></div>
   <div class="more-group">
     <div class="more-item more-item-col">
-      <span>Cuenta y copia en la nube</span>
-      <p class="hint" id="cloudStatus">Tus datos solo están guardados en este dispositivo.</p>
-      <div id="cloudLoginForm">
-        <input type="email" id="cloudEmailInput" placeholder="tu@email.com" autocomplete="email" autocapitalize="off">
-        <input type="password" id="cloudPasswordInput" placeholder="Contraseña" autocomplete="current-password" style="margin-top:8px;">
-        <div style="display:flex; gap:8px; margin-top:8px;">
-          <button class="btn ghost" id="cloudSignUpBtn" style="flex:1;">Crear cuenta</button>
-          <button class="btn primary" id="cloudLoginBtn" style="flex:1;">Iniciar sesión</button>
-        </div>
-      </div>
-      <button class="btn ghost" id="cloudSignOutBtn" style="width:100%; margin-top:8px; display:none;">Cerrar sesión en este dispositivo</button>
+      <span>Cuenta</span>
+      <p class="hint" id="cloudStatus">Sin conexión con la nube.</p>
+      <button class="btn ghost" id="cloudSignOutBtn" style="width:100%; margin-top:4px; display:none;">Cerrar sesión</button>
     </div>
   </div>
   <div class="more-group">
@@ -530,7 +594,7 @@ input[type=file]{display:none;}
 
 <div class="sheet-overlay" id="budgetOverlay">
   <div class="sheet">
-    <h2>Nuevo presupuesto</h2>
+    <div class="sheet-header"><button class="sheet-back" id="backBudgetOverlay"></button><h2>Nuevo presupuesto</h2></div>
     <label>Nombre</label>
     <input id="budgetName" placeholder="Ej. Septiembre 2026">
     <label>Periodo</label>
@@ -538,7 +602,18 @@ input[type=file]{display:none;}
       <option value="mensual">Mensual</option>
       <option value="trimestral">Trimestral</option>
       <option value="anual">Anual</option>
+      <option value="personalizado">Personalizado</option>
     </select>
+    <div id="budgetCustomDatesRow" style="display:none;">
+      <label>Desde</label>
+      <input type="date" id="budgetCustomFrom">
+      <label>Hasta</label>
+      <input type="date" id="budgetCustomTo">
+      <div class="more-item" style="padding:12px 2px 4px; border:none;">
+        <span>Repetir automáticamente al terminar</span>
+        <label class="switch"><input type="checkbox" id="budgetRecurrent" checked><span class="track"></span></label>
+      </div>
+    </div>
     <div class="tab-toggle" style="margin-top:16px;">
       <button type="button" id="scopeGeneralBtn" class="active">General</button>
       <button type="button" id="scopeCatBtn">Por categorías</button>
@@ -552,9 +627,15 @@ input[type=file]{display:none;}
       <div class="budget-total-line"><span>Total del presupuesto</span><span class="nums" id="budgetCatTotal">0,00 €</span></div>
     </div>
     <div class="sheet-actions">
-      <button class="btn ghost" id="cancelBudget">Cancelar</button>
       <button class="btn primary" id="saveBudget">Guardar presupuesto</button>
     </div>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="budgetHistoryOverlay">
+  <div class="sheet">
+    <div class="sheet-header"><button class="sheet-back" id="backBudgetHistory"></button><h2 id="budgetHistoryTitle">Historial</h2></div>
+    <div id="budgetHistoryList"></div>
   </div>
 </div>
 
@@ -762,6 +843,7 @@ function migrateCategorias(){
 }
 
 let sb = null;
+let currentTabId = 'inicio';
 let sbUser = null;
 let cloudSyncTimer = null;
 
@@ -823,6 +905,10 @@ document.getElementById('openPeriodSettings').addEventListener('click', ()=> per
 document.getElementById('backPeriodOverlay').addEventListener('click', ()=> periodOverlay.classList.remove('open'));
 periodOverlay.addEventListener('click', (e)=>{ if(e.target===periodOverlay) periodOverlay.classList.remove('open'); });
 document.getElementById('backConceptGroups').innerHTML = renderIcon('arrow-left');
+document.querySelector('.auth-icon').innerHTML = renderIcon('piggy-bank');
+document.getElementById('backBudgetOverlay').innerHTML = renderIcon('arrow-left');
+document.getElementById('backBudgetHistory').innerHTML = renderIcon('arrow-left');
+document.getElementById('backRecOverlay').innerHTML = renderIcon('arrow-left');
 document.querySelectorAll('.tabbar button').forEach(btn=>{
   btn.addEventListener('pointerdown', (e)=>{
     const rect = btn.getBoundingClientRect();
@@ -845,11 +931,43 @@ function switchTab(tab){
   tabButtons.forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
   document.getElementById('addBtn').classList.toggle('show', !selectionMode && (tab==='inicio' || tab==='movimientos'));
   document.getElementById('bulkBar').classList.toggle('show', selectionMode && tab==='movimientos');
+  currentTabId = tab;
   if(tab==='inicio') renderInicio();
   if(tab==='movimientos') renderMovimientos();
   if(tab==='presupuestos') renderBudgets();
 }
 tabButtons.forEach(b=> b.addEventListener('click', ()=> switchTab(b.dataset.tab)));
+
+/* ---- deslizar entre páginas y arrastrar en la barra inferior ---- */
+const TAB_ORDER = ['inicio','movimientos','presupuestos','mas'];
+let touchStartX = 0, touchStartY = 0, touchActive = false;
+document.querySelectorAll('.page').forEach(page=>{
+  page.addEventListener('touchstart', (e)=>{
+    if(e.touches.length!==1) return;
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    touchActive = true;
+  }, {passive:true});
+  page.addEventListener('touchend', (e)=>{
+    if(!touchActive) return;
+    touchActive = false;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    if(Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy)*1.5){
+      const idx = TAB_ORDER.indexOf(currentTabId);
+      let next = idx;
+      if(dx < 0 && idx < TAB_ORDER.length-1) next = idx+1;
+      if(dx > 0 && idx > 0) next = idx-1;
+      if(next !== idx) switchTab(TAB_ORDER[next]);
+    }
+  }, {passive:true});
+});
+document.querySelector('.tabbar').addEventListener('touchmove', (e)=>{
+  const t = e.touches[0];
+  const el = document.elementFromPoint(t.clientX, t.clientY);
+  const btn = el && el.closest && el.closest('.tab-btn');
+  if(btn && btn.dataset.tab !== currentTabId){ switchTab(btn.dataset.tab); }
+}, {passive:true});
 
 /* ============ RENDER: INICIO ============ */
 function monthRange(date){ return { y:date.getFullYear(), m:date.getMonth() }; }
@@ -1078,25 +1196,25 @@ document.getElementById('bulkCatConfirm').addEventListener('click', ()=>{
 });
 
 /* ---- toggle Lista / Estadísticas ---- */
-document.getElementById('movListBtn').addEventListener('click', ()=>{
-  document.getElementById('movListBtn').classList.add('active');
-  document.getElementById('movStatsBtn').classList.remove('active');
-  document.getElementById('listSection').style.display = 'block';
-  document.getElementById('statsView').style.display = 'none';
-});
-document.getElementById('movStatsBtn').addEventListener('click', ()=>{
-  document.getElementById('movStatsBtn').classList.add('active');
-  document.getElementById('movListBtn').classList.remove('active');
-  document.getElementById('listSection').style.display = 'none';
-  document.getElementById('statsView').style.display = 'block';
-  if(selectionMode){
+function showMovSubTab(mode){
+  document.getElementById('movListBtn').classList.toggle('active', mode==='list');
+  document.getElementById('movStatsBtn').classList.toggle('active', mode==='stats');
+  document.getElementById('movRecBtn').classList.toggle('active', mode==='recibos');
+  document.getElementById('listSection').style.display = mode==='list' ? 'block' : 'none';
+  document.getElementById('statsView').style.display = mode==='stats' ? 'block' : 'none';
+  document.getElementById('recibosView').style.display = mode==='recibos' ? 'block' : 'none';
+  if(mode!=='list' && selectionMode){
     selectionMode = false;
     selectedIds = new Set();
     document.getElementById('selectModeBtn').textContent = 'Seleccionar';
     document.getElementById('selectModeBtn').classList.remove('active');
     updateBulkBar();
   }
-});
+  if(mode==='recibos') renderRecibos();
+}
+document.getElementById('movListBtn').addEventListener('click', ()=> showMovSubTab('list'));
+document.getElementById('movStatsBtn').addEventListener('click', ()=> showMovSubTab('stats'));
+document.getElementById('movRecBtn').addEventListener('click', ()=> showMovSubTab('recibos'));
 
 function buildConicGradient(segments){
   let acc = 0; const parts = [];
@@ -1282,15 +1400,49 @@ document.getElementById('closeCatDetail').addEventListener('click', ()=> catDeta
 catDetailOverlay.addEventListener('click', (e)=>{ if(e.target===catDetailOverlay) catDetailOverlay.classList.remove('open'); });
 
 /* ============ PRESUPUESTOS ============ */
-function periodWindow(period, now){
-  const y = now.getFullYear(), m = now.getMonth();
-  if(period==='mensual') return { start:new Date(y,m,1), end:new Date(y,m+1,0) };
-  if(period==='trimestral'){ const qStart = Math.floor(m/3)*3; return { start:new Date(y,qStart,1), end:new Date(y,qStart+3,0) }; }
-  return { start:new Date(y,0,1), end:new Date(y,11,31) };
+function computeCustomWindow(budget, now){
+  let start = new Date(budget.customFrom+'T00:00:00');
+  let end = new Date(budget.customTo+'T00:00:00');
+  if(!budget.recurrent) return {start, end};
+  const stepMs = (end - start) + 86400000;
+  while(end < now){
+    start = new Date(start.getTime() + stepMs);
+    end = new Date(end.getTime() + stepMs);
+  }
+  return {start, end};
 }
-function budgetSpent(budget){
-  const now = new Date();
-  const {start, end} = periodWindow(budget.period, now);
+function periodWindow(budget, now){
+  const y = now.getFullYear(), m = now.getMonth();
+  if(budget.period==='mensual') return { start:new Date(y,m,1), end:new Date(y,m+1,0) };
+  if(budget.period==='trimestral'){ const qStart = Math.floor(m/3)*3; return { start:new Date(y,qStart,1), end:new Date(y,qStart+3,0) }; }
+  if(budget.period==='anual') return { start:new Date(y,0,1), end:new Date(y,11,31) };
+  return computeCustomWindow(budget, now);
+}
+function getPastWindows(budget, count){
+  const windows = [];
+  let current = periodWindow(budget, new Date());
+  for(let i=0;i<count;i++){
+    windows.push(current);
+    const prevRef = new Date(current.start.getTime() - 86400000);
+    if(budget.period==='personalizado'){
+      if(prevRef < new Date(budget.customFrom+'T00:00:00')) break;
+      const lengthMs = current.end - current.start;
+      current = { start:new Date(current.start.getTime()-(lengthMs+86400000)), end:new Date(current.end.getTime()-(lengthMs+86400000)) };
+    } else {
+      current = periodWindow(budget, prevRef);
+    }
+  }
+  return windows.slice(1);
+}
+function formatDateShort(d){ return d.toLocaleDateString('es-ES',{day:'numeric',month:'short'}); }
+function periodLabelForBudget(b){
+  if(b.period==='personalizado'){
+    const {start,end} = periodWindow(b, new Date());
+    return formatDateShort(start)+' – '+formatDateShort(end) + (b.recurrent?' · recurrente':'');
+  }
+  return b.period;
+}
+function budgetSpentInWindow(budget, start, end){
   const inRange = e => { const d = new Date(e.date+'T00:00:00'); return e.type==='out' && d>=start && d<=end; };
   if(budget.scope==='general'){
     return movimientos.filter(inRange).reduce((s,e)=>s+e.amount,0);
@@ -1299,6 +1451,10 @@ function budgetSpent(budget){
     const spent = movimientos.filter(e=> inRange(e) && e.category===it.category).reduce((s,e)=>s+e.amount,0);
     return { category: it.category, amount: it.amount, spent };
   });
+}
+function budgetSpent(budget){
+  const {start,end} = periodWindow(budget, new Date());
+  return budgetSpentInWindow(budget, start, end);
 }
 function renderBudgets(){
   const listEl = document.getElementById('budgetList');
@@ -1314,7 +1470,7 @@ function renderBudgets(){
       const spent = budgetSpent(b);
       const pct = Math.min(100, Math.round((spent/b.amount)*100)) || 0;
       card.innerHTML = `
-        <div class="top-row"><div><h4>${escapeHtml(b.name)}</h4><div class="period">${b.period}</div></div><button class="del">✕</button></div>
+        <div class="top-row"><div><h4>${escapeHtml(b.name)}</h4><div class="period">${periodLabelForBudget(b)}</div></div><div style="display:flex;gap:10px;align-items:center;"><button class="hist-btn">Historial</button><button class="del">✕</button></div></div>
         <div class="progress-track"><div class="progress-fill ${spent>b.amount?'over':''}" style="width:${pct}%"></div></div>
         <div class="meta"><span class="nums">${fmtMoney(spent)}</span><span class="nums">de ${fmtMoney(b.amount)}</span></div>`;
     } else {
@@ -1323,7 +1479,7 @@ function renderBudgets(){
       const totalSpent = items.reduce((s,i)=>s+i.spent,0);
       const pct = Math.min(100, Math.round((totalSpent/totalAmt)*100)) || 0;
       card.innerHTML = `
-        <div class="top-row"><div><h4>${escapeHtml(b.name)}</h4><div class="period">${b.period} · por categorías</div></div><button class="del">✕</button></div>
+        <div class="top-row"><div><h4>${escapeHtml(b.name)}</h4><div class="period">${periodLabelForBudget(b)} · por categorías</div></div><div style="display:flex;gap:10px;align-items:center;"><button class="hist-btn">Historial</button><button class="del">✕</button></div></div>
         <div class="progress-track"><div class="progress-fill ${totalSpent>totalAmt?'over':''}" style="width:${pct}%"></div></div>
         <div class="meta"><span class="nums">${fmtMoney(totalSpent)}</span><span class="nums">de ${fmtMoney(totalAmt)}</span></div>
         ${items.map(i=>`<div class="cat-line">${catBadge(i.category,'out',30)}<span class="cn">${escapeHtml(i.category)}</span><span class="nums">${fmtMoney(i.spent)} / ${fmtMoney(i.amount)}</span></div>`).join('')}`;
@@ -1334,6 +1490,7 @@ function renderBudgets(){
       renderBudgets();
       toast('Presupuesto eliminado');
     });
+    card.querySelector('.hist-btn').addEventListener('click', ()=> openBudgetHistory(b));
     listEl.appendChild(card);
   });
   if(presupuestos.length>0){
@@ -1345,6 +1502,36 @@ function renderBudgets(){
     listEl.appendChild(addBtn);
   }
 }
+
+const budgetHistoryOverlay = document.getElementById('budgetHistoryOverlay');
+function openBudgetHistory(budget){
+  document.getElementById('budgetHistoryTitle').textContent = 'Historial · ' + budget.name;
+  const windows = getPastWindows(budget, 8);
+  const wrap = document.getElementById('budgetHistoryList');
+  if(windows.length===0){
+    wrap.innerHTML = '<div class="empty">Todavía no hay periodos anteriores para este presupuesto.</div>';
+  } else {
+    wrap.innerHTML = windows.map(w=>{
+      let spentVal, amtVal, pct, over;
+      if(budget.scope==='general'){
+        spentVal = budgetSpentInWindow(budget, w.start, w.end); amtVal = budget.amount;
+      } else {
+        const items = budgetSpentInWindow(budget, w.start, w.end);
+        spentVal = items.reduce((s,i)=>s+i.spent,0); amtVal = items.reduce((s,i)=>s+i.amount,0);
+      }
+      pct = Math.min(100, Math.round((spentVal/amtVal)*100)) || 0;
+      over = spentVal > amtVal;
+      return `<div class="budget-card" style="margin-bottom:10px;">
+        <div class="period">${formatDateShort(w.start)} – ${formatDateShort(w.end)}</div>
+        <div class="progress-track"><div class="progress-fill ${over?'over':''}" style="width:${pct}%"></div></div>
+        <div class="meta"><span class="nums">${fmtMoney(spentVal)}</span><span class="nums">de ${fmtMoney(amtVal)}</span></div>
+      </div>`;
+    }).join('');
+  }
+  budgetHistoryOverlay.classList.add('open');
+}
+document.getElementById('backBudgetHistory').addEventListener('click', ()=> budgetHistoryOverlay.classList.remove('open'));
+budgetHistoryOverlay.addEventListener('click', (e)=>{ if(e.target===budgetHistoryOverlay) budgetHistoryOverlay.classList.remove('open'); });
 
 const budgetOverlay = document.getElementById('budgetOverlay');
 function renderBudgetCatRows(){
@@ -1369,6 +1556,10 @@ function updateBudgetCatTotal(){
 function openBudgetSheet(){
   document.getElementById('budgetName').value = '';
   document.getElementById('budgetPeriod').value = 'mensual';
+  document.getElementById('budgetCustomDatesRow').style.display = 'none';
+  document.getElementById('budgetCustomFrom').value = '';
+  document.getElementById('budgetCustomTo').value = '';
+  document.getElementById('budgetRecurrent').checked = true;
   document.getElementById('budgetGeneralAmt').value = '';
   budgetScope = 'general';
   document.getElementById('scopeGeneralBtn').classList.add('active');
@@ -1379,6 +1570,9 @@ function openBudgetSheet(){
   updateBudgetCatTotal();
   budgetOverlay.classList.add('open');
 }
+document.getElementById('budgetPeriod').addEventListener('change', (e)=>{
+  document.getElementById('budgetCustomDatesRow').style.display = e.target.value==='personalizado' ? 'block' : 'none';
+});
 document.getElementById('scopeGeneralBtn').addEventListener('click', ()=>{
   budgetScope='general';
   document.getElementById('scopeGeneralBtn').classList.add('active');
@@ -1393,15 +1587,25 @@ document.getElementById('scopeCatBtn').addEventListener('click', ()=>{
   document.getElementById('scopeCatFields').style.display='block';
   document.getElementById('scopeGeneralFields').style.display='none';
 });
-document.getElementById('cancelBudget').addEventListener('click', ()=> budgetOverlay.classList.remove('open'));
+document.getElementById('backBudgetOverlay').addEventListener('click', ()=> budgetOverlay.classList.remove('open'));
 budgetOverlay.addEventListener('click', (e)=>{ if(e.target===budgetOverlay) budgetOverlay.classList.remove('open'); });
 document.getElementById('saveBudget').addEventListener('click', ()=>{
   const name = document.getElementById('budgetName').value.trim() || 'Presupuesto';
   const period = document.getElementById('budgetPeriod').value;
+  const extra = {};
+  if(period==='personalizado'){
+    const from = document.getElementById('budgetCustomFrom').value;
+    const to = document.getElementById('budgetCustomTo').value;
+    if(!from || !to){ toast('Elige las fechas de inicio y fin'); return; }
+    if(from > to){ toast('La fecha de inicio debe ser anterior a la de fin'); return; }
+    extra.customFrom = from;
+    extra.customTo = to;
+    extra.recurrent = document.getElementById('budgetRecurrent').checked;
+  }
   if(budgetScope==='general'){
     const amt = parseFloat(document.getElementById('budgetGeneralAmt').value.replace(',','.'));
     if(isNaN(amt) || amt<=0){ toast('Introduce un importe válido'); return; }
-    presupuestos.push({ id:uid(), name, period, scope:'general', amount:amt, created:Date.now() });
+    presupuestos.push({ id:uid(), name, period, scope:'general', amount:amt, created:Date.now(), ...extra });
   } else {
     const items = [];
     document.querySelectorAll('.bcat-amt').forEach(inp=>{
@@ -1409,7 +1613,7 @@ document.getElementById('saveBudget').addEventListener('click', ()=>{
       if(!isNaN(v) && v>0) items.push({ category: inp.dataset.cat, amount: v });
     });
     if(items.length===0){ toast('Añade al menos una categoría'); return; }
-    presupuestos.push({ id:uid(), name, period, scope:'categorias', items, created:Date.now() });
+    presupuestos.push({ id:uid(), name, period, scope:'categorias', items, created:Date.now(), ...extra });
   }
   save(K_BUD, presupuestos);
   budgetOverlay.classList.remove('open');
@@ -1551,6 +1755,100 @@ document.getElementById('addCatBtn').addEventListener('click', ()=>{
   }
 });
 document.getElementById('cancelCatEditBtn').addEventListener('click', resetCatForm);
+
+/* ============ RECIBOS / SUSCRIPCIONES ============ */
+const K_SUBS = 'libreta.suscripciones.v1';
+let suscripciones = load(K_SUBS, []);
+let editingRecId = null;
+const recOverlay = document.getElementById('recOverlay');
+
+function recOccurrencesPerYear(rec){
+  if(rec.frequency==='mensual') return 12;
+  if(rec.frequency==='trimestral') return 4;
+  if(rec.frequency==='anual') return 1;
+  const days = parseFloat(rec.customDays) || 30;
+  return 365 / days;
+}
+function recFrequencyLabel(rec){
+  if(rec.frequency==='mensual') return 'Mensual';
+  if(rec.frequency==='trimestral') return 'Trimestral';
+  if(rec.frequency==='anual') return 'Anual';
+  return 'Cada ' + (rec.customDays||'?') + ' días';
+}
+function renderRecibos(){
+  const wrap = document.getElementById('recibosView');
+  const totalAnual = suscripciones.reduce((s,r)=> s + r.amount * recOccurrencesPerYear(r), 0);
+  let html = `<div class="rec-total-card"><div class="k">gasto anual en recibos y suscripciones</div><div class="v nums">${fmtMoney(totalAnual)}</div></div>`;
+  if(suscripciones.length===0){
+    html += '<div class="empty">Aún no has añadido ningún recibo o suscripción.</div>';
+  } else {
+    suscripciones.slice().sort((a,b)=> (b.amount*recOccurrencesPerYear(b)) - (a.amount*recOccurrencesPerYear(a))).forEach(rec=>{
+      const cat = rec.category ? findCat(rec.category,'out') : null;
+      const iconMarkup = cat ? catIconMarkup(cat) : renderIcon('repeat');
+      const bg = cat ? cat.color : 'var(--primary-soft)';
+      html += `<div class="rec-row" data-id="${rec.id}">
+        <span class="cat-icon" style="background:${bg}">${iconMarkup}</span>
+        <span class="desc"><div class="t">${escapeHtml(rec.name)}</div><div class="c">${recFrequencyLabel(rec)}${rec.category?' · '+escapeHtml(rec.category):''}</div></span>
+        <span class="amt"><div class="a1 nums">${fmtMoney(rec.amount)}</div><div class="a2 nums">${fmtMoney(rec.amount*recOccurrencesPerYear(rec))}/año</div></span>
+      </div>`;
+    });
+  }
+  html += '<button class="btn primary rec-add-btn" id="recAddBtn">+ Añadir recibo</button>';
+  wrap.innerHTML = html;
+  wrap.querySelectorAll('.rec-row').forEach(row=>{
+    row.addEventListener('click', ()=> openRecSheet(suscripciones.find(r=>r.id===row.dataset.id)));
+  });
+  document.getElementById('recAddBtn').addEventListener('click', ()=> openRecSheet(null));
+}
+function fillRecCategorySelect(){
+  const sel = document.getElementById('recCategory');
+  sel.innerHTML = '<option value="">Sin categoría</option>' + sortedCats('out').map(c=>`<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`).join('');
+}
+function openRecSheet(rec){
+  editingRecId = rec ? rec.id : null;
+  document.getElementById('recTitle').textContent = rec ? 'Editar recibo' : 'Nuevo recibo';
+  document.getElementById('recName').value = rec ? rec.name : '';
+  document.getElementById('recAmount').value = rec ? String(rec.amount).replace('.', ',') : '';
+  document.getElementById('recFrequency').value = rec ? rec.frequency : 'mensual';
+  document.getElementById('recCustomDays').value = rec && rec.customDays ? rec.customDays : '';
+  document.getElementById('recCustomDaysRow').style.display = (rec && rec.frequency==='personalizado') ? 'block' : 'none';
+  fillRecCategorySelect();
+  document.getElementById('recCategory').value = rec && rec.category ? rec.category : '';
+  document.getElementById('recDeleteRow').style.display = rec ? 'flex' : 'none';
+  recOverlay.classList.add('open');
+}
+document.getElementById('backRecOverlay').addEventListener('click', ()=> recOverlay.classList.remove('open'));
+recOverlay.addEventListener('click', (e)=>{ if(e.target===recOverlay) recOverlay.classList.remove('open'); });
+document.getElementById('recFrequency').addEventListener('change', (e)=>{
+  document.getElementById('recCustomDaysRow').style.display = e.target.value==='personalizado' ? 'block' : 'none';
+});
+document.getElementById('recSaveBtn').addEventListener('click', ()=>{
+  const name = document.getElementById('recName').value.trim();
+  const amount = parseFloat(document.getElementById('recAmount').value.replace(',','.'));
+  const frequency = document.getElementById('recFrequency').value;
+  const customDays = document.getElementById('recCustomDays').value;
+  const category = document.getElementById('recCategory').value;
+  if(!name){ toast('Ponle un nombre al recibo'); return; }
+  if(isNaN(amount) || amount<=0){ toast('Introduce un importe válido'); return; }
+  if(frequency==='personalizado' && (!customDays || parseFloat(customDays)<=0)){ toast('Indica cada cuántos días se cobra'); return; }
+  if(editingRecId){
+    const rec = suscripciones.find(r=>r.id===editingRecId);
+    Object.assign(rec, { name, amount, frequency, customDays, category });
+  } else {
+    suscripciones.push({ id:uid(), name, amount, frequency, customDays, category, createdAt:Date.now() });
+  }
+  save(K_SUBS, suscripciones);
+  recOverlay.classList.remove('open');
+  renderRecibos();
+  toast('Recibo guardado');
+});
+document.getElementById('recDeleteBtn').addEventListener('click', ()=>{
+  suscripciones = suscripciones.filter(r=>r.id!==editingRecId);
+  save(K_SUBS, suscripciones);
+  recOverlay.classList.remove('open');
+  renderRecibos();
+  toast('Recibo eliminado');
+});
 
 /* ============ CATEGORIZAR POR CONCEPTO REPETIDO ============ */
 const K_CONCEPT_MAP = 'libreta.conceptmap.v1';
@@ -1911,6 +2209,7 @@ async function pushAllToCloud(){
     categorias, presupuestos,
     saldo_inicial: saldoInicial,
     concept_map: conceptMap,
+    suscripciones,
     theme,
     updated_at: new Date().toISOString()
   });
@@ -1929,11 +2228,13 @@ async function pullFromCloud(){
     if(ud.presupuestos) presupuestos = ud.presupuestos;
     if(ud.saldo_inicial !== null && ud.saldo_inicial !== undefined) saldoInicial = Number(ud.saldo_inicial);
     if(ud.concept_map) conceptMap = ud.concept_map;
+    if(ud.suscripciones) suscripciones = ud.suscripciones;
     if(ud.theme) theme = ud.theme;
     localStorage.setItem(K_CAT, JSON.stringify(categorias));
     localStorage.setItem(K_BUD, JSON.stringify(presupuestos));
     localStorage.setItem(K_INITIAL, saldoInicial);
     localStorage.setItem(K_CONCEPT_MAP, JSON.stringify(conceptMap));
+    localStorage.setItem(K_SUBS, JSON.stringify(suscripciones));
     localStorage.setItem(K_THEME, theme);
     applyTheme(theme);
     document.getElementById('initialBalanceInput').value = saldoInicial ? String(saldoInicial).replace('.', ',') : '';
@@ -1947,16 +2248,16 @@ async function pullFromCloud(){
 }
 function updateCloudUI(user){
   const statusEl = document.getElementById('cloudStatus');
-  const form = document.getElementById('cloudLoginForm');
   const signOutBtn = document.getElementById('cloudSignOutBtn');
+  const gate = document.getElementById('authGate');
   if(user){
-    statusEl.textContent = 'Sincronizado con ' + (user.email || 'tu cuenta') + '.';
-    form.style.display = 'none';
+    statusEl.textContent = 'Sesión iniciada como ' + (user.email || 'tu cuenta') + '.';
     signOutBtn.style.display = 'block';
+    gate.classList.add('hidden');
   } else {
-    statusEl.textContent = 'Tus datos solo están guardados en este dispositivo.';
-    form.style.display = 'block';
+    statusEl.textContent = 'Sin conexión con la nube.';
     signOutBtn.style.display = 'none';
+    gate.classList.remove('hidden');
   }
 }
 async function onSignedIn(user){
@@ -1981,45 +2282,54 @@ if(sb){
     if(event==='SIGNED_IN' && session && session.user){ onSignedIn(session.user); }
     else if(event==='SIGNED_OUT'){ sbUser = null; updateCloudUI(null); }
   });
+} else {
+  document.getElementById('authError').textContent = 'No se pudo conectar. Revisa tu internet e inténtalo de nuevo.';
 }
-document.getElementById('cloudSignUpBtn').addEventListener('click', async ()=>{
-  if(!sb){ toast('No se pudo cargar la conexión con la nube (revisa tu internet)'); return; }
-  const email = document.getElementById('cloudEmailInput').value.trim();
-  const password = document.getElementById('cloudPasswordInput').value;
-  if(!email || !password){ toast('Escribe tu email y una contraseña'); return; }
-  if(password.length < 6){ toast('La contraseña debe tener al menos 6 caracteres'); return; }
-  const btn = document.getElementById('cloudSignUpBtn');
-  btn.disabled = true; btn.textContent = 'Creando…';
+function authSetLoading(loading){
+  document.getElementById('authLoginBtn').disabled = loading;
+  document.getElementById('authSignupBtn').disabled = loading;
+}
+document.getElementById('authSignupBtn').addEventListener('click', async ()=>{
+  const errEl = document.getElementById('authError');
+  errEl.textContent = '';
+  if(!sb){ errEl.textContent = 'No se pudo conectar con la nube. Revisa tu internet.'; return; }
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  if(!email || !password){ errEl.textContent = 'Escribe tu email y una contraseña'; return; }
+  if(password.length < 6){ errEl.textContent = 'La contraseña debe tener al menos 6 caracteres'; return; }
+  authSetLoading(true);
+  const btn = document.getElementById('authSignupBtn');
+  const originalText = btn.textContent; btn.textContent = 'Creando…';
   try{
     const { data, error } = await sb.auth.signUp({ email, password });
     if(error) throw error;
-    if(data.session){
-      toast('Cuenta creada');
-    } else {
-      document.getElementById('cloudStatus').textContent = 'Cuenta creada. Revisa tu correo para confirmarla y luego inicia sesión aquí.';
+    if(!data.session){
+      errEl.textContent = 'Cuenta creada. Revisa tu correo para confirmarla y vuelve a iniciar sesión.';
     }
   }catch(err){
-    toast(err.message && err.message.includes('already') ? 'Ese email ya tiene una cuenta, inicia sesión' : 'No se pudo crear la cuenta');
+    errEl.textContent = (err.message && err.message.toLowerCase().includes('already')) ? 'Ese email ya tiene una cuenta. Inicia sesión.' : 'No se pudo crear la cuenta.';
     console.error(err);
   }
-  btn.disabled = false; btn.textContent = 'Crear cuenta';
+  authSetLoading(false); btn.textContent = originalText;
 });
-document.getElementById('cloudLoginBtn').addEventListener('click', async ()=>{
-  if(!sb){ toast('No se pudo cargar la conexión con la nube (revisa tu internet)'); return; }
-  const email = document.getElementById('cloudEmailInput').value.trim();
-  const password = document.getElementById('cloudPasswordInput').value;
-  if(!email || !password){ toast('Escribe tu email y tu contraseña'); return; }
-  const btn = document.getElementById('cloudLoginBtn');
-  btn.disabled = true; btn.textContent = 'Entrando…';
+document.getElementById('authLoginBtn').addEventListener('click', async ()=>{
+  const errEl = document.getElementById('authError');
+  errEl.textContent = '';
+  if(!sb){ errEl.textContent = 'No se pudo conectar con la nube. Revisa tu internet.'; return; }
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  if(!email || !password){ errEl.textContent = 'Escribe tu email y tu contraseña'; return; }
+  authSetLoading(true);
+  const btn = document.getElementById('authLoginBtn');
+  const originalText = btn.textContent; btn.textContent = 'Entrando…';
   try{
     const { error } = await sb.auth.signInWithPassword({ email, password });
     if(error) throw error;
-    toast('Sesión iniciada');
   }catch(err){
-    toast('Email o contraseña incorrectos');
+    errEl.textContent = 'Email o contraseña incorrectos.';
     console.error(err);
   }
-  btn.disabled = false; btn.textContent = 'Iniciar sesión';
+  authSetLoading(false); btn.textContent = originalText;
 });
 document.getElementById('cloudSignOutBtn').addEventListener('click', async ()=>{
   if(!sb) return;
