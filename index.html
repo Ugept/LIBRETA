@@ -705,6 +705,7 @@ input[type=file]{display:none;}
     <div id="bankStage2" style="display:none;">
       <label>Columna de fecha</label>
       <select id="bankColDate"></select>
+      <p class="hint" id="bankDateSample" style="margin-top:-4px;"></p>
       <label>Columna de importe</label>
       <select id="bankColAmount"></select>
       <label>Columna de concepto (opcional)</label>
@@ -2026,8 +2027,22 @@ function fillBankColumnSelects(){
   if(amtIdx!==null) document.getElementById('bankColAmount').value = amtIdx;
   if(descIdx!==null) document.getElementById('bankColDesc').value = descIdx;
   if(catIdx!==null) document.getElementById('bankColCat').value = catIdx;
+  updateBankDateSample();
 }
+function updateBankDateSample(){
+  const idx = parseInt(document.getElementById('bankColDate').value);
+  const sampleEl = document.getElementById('bankDateSample');
+  if(isNaN(idx) || !bankWorkbookRows.length){ sampleEl.textContent = ''; return; }
+  const samples = bankWorkbookRows.slice(0,3).map(r=>{
+    const raw = r[idx];
+    const parsed = parseDateFlexible(raw);
+    return `"${raw instanceof Date ? raw.toString() : raw}" → ${parsed || 'no reconocida'}`;
+  });
+  sampleEl.innerHTML = 'Ejemplo: ' + samples.join(' · ');
+}
+document.getElementById('bankColDate').addEventListener('change', updateBankDateSample);
 
+const MONTH_NAMES_ES = {enero:1,ene:1,febrero:2,feb:2,marzo:3,mar:3,abril:4,abr:4,mayo:5,may:5,junio:6,jun:6,julio:7,jul:7,agosto:8,ago:8,septiembre:9,setiembre:9,sep:9,sept:9,octubre:10,oct:10,noviembre:11,nov:11,diciembre:12,dic:12};
 function parseDateFlexible(v){
   if(v instanceof Date && !isNaN(v)){
     return v.getFullYear()+'-'+String(v.getMonth()+1).padStart(2,'0')+'-'+String(v.getDate()).padStart(2,'0');
@@ -2038,10 +2053,27 @@ function parseDateFlexible(v){
   }
   if(typeof v === 'string'){
     const s = v.trim();
-    let m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-    if(m) return `${m[1]}-${m[2]}-${m[3]}`;
-    m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+    if(!s) return null;
+    // número de serie de Excel guardado como texto (ej. "45905")
+    if(/^\d{4,6}$/.test(s)){
+      const n = parseInt(s,10);
+      const d = new Date(Math.round((n-25569)*86400*1000));
+      if(!isNaN(d) && d.getFullYear() > 1990 && d.getFullYear() < 2100){
+        return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      }
+    }
+    let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if(m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+    m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/);
     if(m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+    m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2})(?!\d)/);
+    if(m) return `20${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+    // "11 de septiembre de 2026", "11 sep 2026", "sep 11, 2026"
+    const low = s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    m = low.match(/(\d{1,2})\s*(?:de\s+)?([a-z]+)\.?\s*(?:de\s+)?(\d{4})/);
+    if(m && MONTH_NAMES_ES[m[2]]) return `${m[3]}-${String(MONTH_NAMES_ES[m[2]]).padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+    m = low.match(/([a-z]+)\.?\s+(\d{1,2}),?\s+(\d{4})/);
+    if(m && MONTH_NAMES_ES[m[1]]) return `${m[3]}-${String(MONTH_NAMES_ES[m[1]]).padStart(2,'0')}-${m[2].padStart(2,'0')}`;
   }
   return null;
 }
@@ -2067,12 +2099,13 @@ document.getElementById('bankPreviewBtn').addEventListener('click', ()=>{
   const dTo = document.getElementById('bankDateTo').value;
 
   bankPreviewRows = [];
+  let badDate = 0, badAmount = 0, outOfRange = 0;
   bankWorkbookRows.forEach(row=>{
     const dateISO = parseDateFlexible(row[dateIdx]);
     const amt = parseAmountFlexible(row[amtIdx]);
-    if(!dateISO || amt===null || amt===0) return;
-    if(dFrom && dateISO < dFrom) return;
-    if(dTo && dateISO > dTo) return;
+    if(!dateISO){ badDate++; return; }
+    if(amt===null || amt===0){ badAmount++; return; }
+    if((dFrom && dateISO < dFrom) || (dTo && dateISO > dTo)){ outOfRange++; return; }
     const type = amt < 0 ? 'out' : 'in';
     const desc = (includeDesc && descIdx>=0 && row[descIdx]!==undefined) ? String(row[descIdx]).trim() : '';
     let category = type==='in' ? 'Otro ingreso' : 'Otro gasto';
@@ -2082,7 +2115,20 @@ document.getElementById('bankPreviewBtn').addEventListener('click', ()=>{
     bankPreviewRows.push({ date:dateISO, amount:Math.abs(amt), type, desc, category, include:true });
   });
 
-  if(bankPreviewRows.length===0){ toast('No se encontraron movimientos con esos filtros'); return; }
+  if(bankPreviewRows.length===0){
+    let msg = 'No se encontraron movimientos.';
+    if(badDate>0) msg += ' ' + badDate + ' fila(s) tenían una fecha que no reconocí en la columna elegida.';
+    if(badAmount>0) msg += ' ' + badAmount + ' fila(s) tenían un importe no válido o en cero.';
+    if(outOfRange>0) msg += ' ' + outOfRange + ' fila(s) quedaban fuera del rango de fechas.';
+    toast(msg);
+    if(badDate>0){
+      console.log('Ejemplos de valores de fecha no reconocidos:', bankWorkbookRows.slice(0,5).map(r=>r[dateIdx]));
+    }
+    return;
+  }
+  if(badDate>0 || badAmount>0){
+    toast((badDate+badAmount) + ' fila(s) se han descartado (fecha o importe no reconocidos). Revisa la columna elegida si esperabas más movimientos.');
+  }
 
   bankPreviewRows.forEach(r=>{
     if(!findCat(r.category, r.type)){
