@@ -15,8 +15,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
-  --bg:#F5EFE6; --card:#FFFFFF; --ink:#2B2420; --ink-soft:#8A7F72;
-  --primary:#C1694F; --primary-soft:#F0D9CE;
+  --bg:#FBF8F3; --card:#FFFFFF; --ink:#2B2420; --ink-soft:#8A7F72;
+  --primary:#B5503A; --primary-soft:#F0D7CB;
   --green:#2F8F5B; --green-soft:#DDEFE3;
   --red:#C1443B; --red-soft:#F6DEDB;
   --rule:#E7DFD2; --shadow:rgba(43,36,32,.09);
@@ -24,13 +24,13 @@
 }
 [data-theme="dark"]{
   --bg:#1B1815; --card:#26221D; --ink:#F1EAE0; --ink-soft:#A79C8C;
-  --primary:#D98567; --primary-soft:#3A2A22;
+  --primary:#D9765A; --primary-soft:#3B2721;
   --green:#5FBE8B; --green-soft:#1E332A;
   --red:#E17167; --red-soft:#3A2320;
   --rule:#3A342C; --shadow:rgba(0,0,0,.35);
 }
 *{box-sizing:border-box;}
-html,body{height:100%;}
+html,body{height:100%; overflow-x:hidden;}
 body{
   margin:0; background:var(--bg); color:var(--ink);
   font-family:'Inter', system-ui, sans-serif;
@@ -41,23 +41,29 @@ body{
 }
 .nums{font-family:'IBM Plex Mono', ui-monospace, monospace; font-variant-numeric:tabular-nums;}
 button, input, select{font-family:inherit;}
-svg.ico{width:20px; height:20px; stroke:#2B2420; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;}
+svg.ico{width:20px; height:20px; stroke:var(--ink); fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;}
+.cat-icon svg.ico{stroke:#2B2420;}
 svg.ico.lg{width:34px; height:34px; stroke-width:1.6;}
 
 /* ---- top bar ---- */
 .topbar{
   display:flex; align-items:center; justify-content:space-between;
-  padding:calc(16px + env(safe-area-inset-top)) 20px 14px;
+  padding:calc(16px + env(safe-area-inset-top)) 20px 20px;
 }
-.topbar h1{margin:0; font-size:1.2rem; font-weight:800; letter-spacing:-.01em;}
-.topbar .spacer{width:28px;}
+.topbar h1{margin:0; font-size:2.1rem; font-weight:800; letter-spacing:-.01em; text-transform:uppercase;}
+.topbar .spacer{width:34px;}
+.icon-btn{
+  width:34px; height:34px; border-radius:50%; border:none; background:var(--card);
+  box-shadow:0 2px 8px var(--shadow); display:flex; align-items:center; justify-content:center;
+  flex:none; cursor:pointer; padding:0;
+}
+.icon-btn svg.ico{width:18px; height:18px;}
+.period-label{margin:-8px 2px 16px; font-size:.85rem; color:var(--ink-soft); font-weight:600;}
 
-.page{display:none; padding:0 18px 60px;}
+.page{display:none; padding:0 18px 100px;}
 .page.active{display:block;}
 
 /* ---- Inicio ---- */
-.topbar.hero{padding-bottom:20px;}
-.topbar.hero h1{font-size:2.1rem;}
 
 .stat-row{display:flex; gap:12px; margin-bottom:18px;}
 .stat-card{
@@ -68,6 +74,8 @@ svg.ico.lg{width:34px; height:34px; stroke-width:1.6;}
 .stat-card .v{font-size:1.08rem; font-weight:700;}
 .stat-card .v.in{color:var(--green);}
 .stat-card .v.out{color:var(--red);}
+.balance-card{margin-bottom:18px; text-align:center; padding:18px 12px;}
+.balance-card .v{font-size:1.9rem; font-weight:800;}
 
 .chart-card{
   background:var(--card); border-radius:var(--radius);
@@ -234,7 +242,7 @@ svg.ico.lg{width:34px; height:34px; stroke-width:1.6;}
 .color-picker button.active{border-color:var(--ink);}
 
 /* ---- bottom tab bar: floating translucent pill (estilo Apple) ---- */
-body{ padding-bottom:calc(150px + env(safe-area-inset-bottom)); }
+body{ padding-bottom:calc(230px + env(safe-area-inset-bottom)); }
 .tabbar{
   position:fixed; left:14px; right:14px; bottom:calc(14px + env(safe-area-inset-bottom));
   background:rgba(255,255,255,.62); -webkit-backdrop-filter:blur(22px) saturate(1.6); backdrop-filter:blur(22px) saturate(1.6);
@@ -289,6 +297,14 @@ body{ padding-bottom:calc(150px + env(safe-area-inset-bottom)); }
   padding:20px 20px calc(20px + env(safe-area-inset-bottom)); max-height:90vh; overflow-y:auto;
 }
 .sheet h2{margin:2px 0 18px; font-size:1.12rem; font-weight:800;}
+.sheet-header{display:flex; align-items:center; gap:10px; margin-bottom:4px;}
+.sheet-header h2{margin:0;}
+.sheet-back{
+  width:34px; height:34px; border-radius:50%; border:none; background:var(--card);
+  box-shadow:0 2px 8px var(--shadow); display:flex; align-items:center; justify-content:center;
+  flex:none; cursor:pointer; padding:0;
+}
+.sheet-back svg.ico{width:18px; height:18px;}
 label{display:block; font-size:.72rem; color:var(--ink-soft); margin:14px 2px 6px; font-weight:700;}
 input, select{
   width:100%; font-size:1rem; padding:12px 13px; border:1px solid var(--rule); border-radius:12px;
@@ -341,11 +357,14 @@ input[type=file]{display:none;}
 
 <!-- ===== INICIO ===== -->
 <section class="page active" id="page-inicio">
-  <div class="topbar hero"><h1>LIBRETA</h1><span class="spacer"></span></div>
+  <div class="topbar"><h1>LIBRETA</h1><span class="spacer"></span></div>
   <div class="stat-row">
     <div class="stat-card"><div class="k">Ingresos</div><div class="v in nums" id="hIn">0,00 €</div></div>
     <div class="stat-card"><div class="k">Gastos</div><div class="v out nums" id="hOut">0,00 €</div></div>
-    <div class="stat-card"><div class="k">Saldo</div><div class="v nums" id="hBal">0,00 €</div></div>
+  </div>
+  <div class="stat-card balance-card">
+    <div class="k">Saldo</div>
+    <div class="v nums" id="hBal">0,00 €</div>
   </div>
   <div class="chart-card">
     <h3>Evolución del saldo (últimos 6 meses)</h3>
@@ -357,26 +376,8 @@ input[type=file]{display:none;}
 
 <!-- ===== MOVIMIENTOS ===== -->
 <section class="page" id="page-movimientos">
-  <div class="topbar"><h1>Movimientos</h1><span class="spacer"></span></div>
-
-  <div class="tab-toggle">
-    <button type="button" id="periodMonthBtn" class="active">Por mes</button>
-    <button type="button" id="periodRangeBtn">Rango de fechas</button>
-  </div>
-
-  <div class="month-nav" id="monthNavRow">
-    <button id="prevMonth">‹</button>
-    <span class="m-label" id="monthLabel">—</span>
-    <button id="nextMonth">›</button>
-  </div>
-
-  <div id="rangePickerRow" style="display:none; margin-bottom:18px;">
-    <label style="margin-top:0;">Desde</label>
-    <input type="date" id="rangeFromInput">
-    <label>Hasta</label>
-    <input type="date" id="rangeToInput">
-    <button class="btn primary" id="rangeApplyBtn" style="width:100%; margin-top:14px;">Aplicar rango</button>
-  </div>
+  <div class="topbar"><h1>Movimientos</h1><button class="icon-btn" id="openPeriodSettings"></button></div>
+  <div class="period-label" id="periodLabelDisplay">—</div>
 
   <div class="tab-toggle">
     <button type="button" id="movListBtn" class="active">Lista</button>
@@ -392,6 +393,28 @@ input[type=file]{display:none;}
   </div>
   <div id="statsView" style="display:none;"></div>
 </section>
+
+<div class="sheet-overlay" id="periodOverlay">
+  <div class="sheet">
+    <div class="sheet-header"><button class="sheet-back" id="backPeriodOverlay"></button><h2>Periodo</h2></div>
+    <div class="tab-toggle">
+      <button type="button" id="periodMonthBtn" class="active">Por mes</button>
+      <button type="button" id="periodRangeBtn">Rango de fechas</button>
+    </div>
+    <div class="month-nav" id="monthNavRow">
+      <button id="prevMonth">‹</button>
+      <span class="m-label" id="monthLabel">—</span>
+      <button id="nextMonth">›</button>
+    </div>
+    <div id="rangePickerRow" style="display:none;">
+      <label style="margin-top:0;">Desde</label>
+      <input type="date" id="rangeFromInput">
+      <label>Hasta</label>
+      <input type="date" id="rangeToInput">
+      <button class="btn primary" id="rangeApplyBtn" style="width:100%; margin-top:14px;">Aplicar rango</button>
+    </div>
+  </div>
+</div>
 
 <div class="bulk-bar" id="bulkBar">
   <span id="bulkCount">0 seleccionados</span>
@@ -426,11 +449,15 @@ input[type=file]{display:none;}
   <div class="topbar"><h1>Más</h1><span class="spacer"></span></div>
   <div class="more-group">
     <div class="more-item more-item-col">
-      <span>Copia en la nube</span>
+      <span>Cuenta y copia en la nube</span>
       <p class="hint" id="cloudStatus">Tus datos solo están guardados en este dispositivo.</p>
       <div id="cloudLoginForm">
         <input type="email" id="cloudEmailInput" placeholder="tu@email.com" autocomplete="email" autocapitalize="off">
-        <button class="btn primary" id="cloudSendLinkBtn" style="width:100%; margin-top:8px;">Enviar enlace mágico</button>
+        <input type="password" id="cloudPasswordInput" placeholder="Contraseña" autocomplete="current-password" style="margin-top:8px;">
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <button class="btn ghost" id="cloudSignUpBtn" style="flex:1;">Crear cuenta</button>
+          <button class="btn primary" id="cloudLoginBtn" style="flex:1;">Iniciar sesión</button>
+        </div>
       </div>
       <button class="btn ghost" id="cloudSignOutBtn" style="width:100%; margin-top:8px; display:none;">Cerrar sesión en este dispositivo</button>
     </div>
@@ -533,7 +560,7 @@ input[type=file]{display:none;}
 
 <div class="sheet-overlay" id="catManageOverlay">
   <div class="sheet">
-    <h2>Categorías</h2>
+    <div class="sheet-header"><button class="sheet-back" id="backCatManage"></button><h2>Categorías</h2></div>
     <div class="tab-toggle">
       <button type="button" id="catManageInBtn" class="active">Ingresos</button>
       <button type="button" id="catManageOutBtn">Gastos</button>
@@ -559,20 +586,14 @@ input[type=file]{display:none;}
     <div class="sheet-actions" id="cancelCatEdit" style="display:none;">
       <button class="btn ghost" id="cancelCatEditBtn">Cancelar edición</button>
     </div>
-    <div class="sheet-actions">
-      <button class="btn ghost" id="closeCatManage">Cerrar</button>
-    </div>
   </div>
 </div>
 
 <div class="sheet-overlay" id="conceptOverlay">
   <div class="sheet">
-    <h2>Categorizar por concepto repetido</h2>
+    <div class="sheet-header"><button class="sheet-back" id="backConceptGroups"></button><h2>Categorizar por concepto repetido</h2></div>
     <p class="hint" style="margin-bottom:14px;">Estos conceptos aparecen en más de un movimiento. Elige una categoría y aplícala a todos los que tengan ese mismo texto de una vez.</p>
     <div id="conceptList"></div>
-    <div class="sheet-actions">
-      <button class="btn ghost" id="closeConceptGroups">Cerrar</button>
-    </div>
   </div>
 </div>
 
@@ -670,7 +691,10 @@ const ICON_PATHS = {
   'credit-card': '<rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>',
   'repeat': '<path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/>',
   'more-horizontal': '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
-  'gamepad-2': '<rect x="4" y="8" width="16" height="9" rx="4"/><path d="M8 11v3M6.5 12.5h3"/><circle cx="15.5" cy="11.2" r=".9"/><circle cx="17.5" cy="13.2" r=".9"/>'
+  'gamepad-2': '<line x1="6" x2="10" y1="11" y2="11"/><line x1="8" x2="8" y1="9" y2="13"/><line x1="15" x2="15.01" y1="12" y2="12"/><line x1="18" x2="18.01" y1="10" y2="10"/><path d="M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.151A4 4 0 0 0 17.32 5z"/>',
+  'arrow-left': '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
+  'plus': '<path d="M5 12h14"/><path d="M12 5v14"/>',
+  'settings': '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>'
 };
 function renderIcon(key, extraClass){
   const p = ICON_PATHS[key] || ICON_PATHS['more-horizontal'];
@@ -789,8 +813,16 @@ initialBalanceInput.addEventListener('change', ()=>{
 document.querySelectorAll('.tab-btn').forEach(b=>{
   b.insertAdjacentHTML('afterbegin', renderIcon(b.dataset.ic));
 });
-document.getElementById('addBtn').innerHTML = renderIcon('wallet');
+document.getElementById('addBtn').innerHTML = renderIcon('plus');
 document.getElementById('calcFab').innerHTML = renderIcon('calculator');
+document.getElementById('backCatManage').innerHTML = renderIcon('arrow-left');
+document.getElementById('openPeriodSettings').innerHTML = renderIcon('settings');
+document.getElementById('backPeriodOverlay').innerHTML = renderIcon('arrow-left');
+const periodOverlay = document.getElementById('periodOverlay');
+document.getElementById('openPeriodSettings').addEventListener('click', ()=> periodOverlay.classList.add('open'));
+document.getElementById('backPeriodOverlay').addEventListener('click', ()=> periodOverlay.classList.remove('open'));
+periodOverlay.addEventListener('click', (e)=>{ if(e.target===periodOverlay) periodOverlay.classList.remove('open'); });
+document.getElementById('backConceptGroups').innerHTML = renderIcon('arrow-left');
 document.querySelectorAll('.tabbar button').forEach(btn=>{
   btn.addEventListener('pointerdown', (e)=>{
     const rect = btn.getBoundingClientRect();
@@ -930,6 +962,7 @@ document.getElementById('rangeApplyBtn').addEventListener('click', ()=>{
 
 function renderMovimientos(){
   monthLabelEl.textContent = currentPeriodLabel();
+  document.getElementById('periodLabelDisplay').textContent = currentPeriodLabel();
   const monthEntries = currentPeriodEntries().sort((a,b)=> b.date.localeCompare(a.date) || b.created - a.created);
 
   document.getElementById('listCount').textContent = monthEntries.length + (monthEntries.length===1 ? ' movimiento' : ' movimientos');
@@ -1387,7 +1420,7 @@ document.getElementById('saveBudget').addEventListener('click', ()=>{
 /* ============ GESTIONAR CATEGORÍAS ============ */
 const catManageOverlay = document.getElementById('catManageOverlay');
 document.getElementById('openCats').addEventListener('click', ()=>{ editingCatManageType='in'; resetCatForm(); renderCatManage(); catManageOverlay.classList.add('open'); });
-document.getElementById('closeCatManage').addEventListener('click', ()=> catManageOverlay.classList.remove('open'));
+document.getElementById('backCatManage').addEventListener('click', ()=> catManageOverlay.classList.remove('open'));
 catManageOverlay.addEventListener('click', (e)=>{ if(e.target===catManageOverlay) catManageOverlay.classList.remove('open'); });
 document.getElementById('catManageInBtn').addEventListener('click', ()=>{ editingCatManageType='in'; resetCatForm(); renderCatManage(); });
 document.getElementById('catManageOutBtn').addEventListener('click', ()=>{ editingCatManageType='out'; resetCatForm(); renderCatManage(); });
@@ -1595,7 +1628,7 @@ function renderConceptGroups(){
   });
 }
 document.getElementById('openConceptGroups').addEventListener('click', ()=>{ renderConceptGroups(); conceptOverlay.classList.add('open'); });
-document.getElementById('closeConceptGroups').addEventListener('click', ()=> conceptOverlay.classList.remove('open'));
+document.getElementById('backConceptGroups').addEventListener('click', ()=> conceptOverlay.classList.remove('open'));
 conceptOverlay.addEventListener('click', (e)=>{ if(e.target===conceptOverlay) conceptOverlay.classList.remove('open'); });
 
 /* ============ EXPORT / IMPORT ============ */
@@ -1949,22 +1982,44 @@ if(sb){
     else if(event==='SIGNED_OUT'){ sbUser = null; updateCloudUI(null); }
   });
 }
-document.getElementById('cloudSendLinkBtn').addEventListener('click', async ()=>{
+document.getElementById('cloudSignUpBtn').addEventListener('click', async ()=>{
   if(!sb){ toast('No se pudo cargar la conexión con la nube (revisa tu internet)'); return; }
   const email = document.getElementById('cloudEmailInput').value.trim();
-  if(!email){ toast('Escribe tu email'); return; }
-  const btn = document.getElementById('cloudSendLinkBtn');
-  btn.disabled = true; btn.textContent = 'Enviando…';
+  const password = document.getElementById('cloudPasswordInput').value;
+  if(!email || !password){ toast('Escribe tu email y una contraseña'); return; }
+  if(password.length < 6){ toast('La contraseña debe tener al menos 6 caracteres'); return; }
+  const btn = document.getElementById('cloudSignUpBtn');
+  btn.disabled = true; btn.textContent = 'Creando…';
   try{
-    const redirectTo = window.location.href.split('#')[0].split('?')[0];
-    const { error } = await sb.auth.signInWithOtp({ email, options:{ emailRedirectTo: redirectTo } });
+    const { data, error } = await sb.auth.signUp({ email, password });
     if(error) throw error;
-    document.getElementById('cloudStatus').textContent = 'Te hemos enviado un enlace a ' + email + '. Ábrelo desde este mismo iPhone.';
+    if(data.session){
+      toast('Cuenta creada');
+    } else {
+      document.getElementById('cloudStatus').textContent = 'Cuenta creada. Revisa tu correo para confirmarla y luego inicia sesión aquí.';
+    }
   }catch(err){
-    toast('No se pudo enviar el enlace');
+    toast(err.message && err.message.includes('already') ? 'Ese email ya tiene una cuenta, inicia sesión' : 'No se pudo crear la cuenta');
     console.error(err);
   }
-  btn.disabled = false; btn.textContent = 'Enviar enlace mágico';
+  btn.disabled = false; btn.textContent = 'Crear cuenta';
+});
+document.getElementById('cloudLoginBtn').addEventListener('click', async ()=>{
+  if(!sb){ toast('No se pudo cargar la conexión con la nube (revisa tu internet)'); return; }
+  const email = document.getElementById('cloudEmailInput').value.trim();
+  const password = document.getElementById('cloudPasswordInput').value;
+  if(!email || !password){ toast('Escribe tu email y tu contraseña'); return; }
+  const btn = document.getElementById('cloudLoginBtn');
+  btn.disabled = true; btn.textContent = 'Entrando…';
+  try{
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if(error) throw error;
+    toast('Sesión iniciada');
+  }catch(err){
+    toast('Email o contraseña incorrectos');
+    console.error(err);
+  }
+  btn.disabled = false; btn.textContent = 'Iniciar sesión';
 });
 document.getElementById('cloudSignOutBtn').addEventListener('click', async ()=>{
   if(!sb) return;
