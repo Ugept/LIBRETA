@@ -737,6 +737,10 @@ function migrateCategorias(){
   save(K_CAT, categorias);
 }
 
+let sb = null;
+let sbUser = null;
+let cloudSyncTimer = null;
+
 let movimientos = load(K_MOV, []);
 let categorias = load(K_CAT, defaultCategorias());
 migrateCategorias();
@@ -1852,10 +1856,6 @@ if('serviceWorker' in navigator){
 /* ============ SUPABASE: copia en la nube ============ */
 const SUPABASE_URL = 'https://vuaivjbdnuzvvoxlgxrd.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_ylbzq5Ajf6Nch5VLfEekjg_Kh7g05pD';
-let sb = null;
-let sbUser = null;
-let cloudSyncTimer = null;
-
 try{
   if(typeof supabase !== 'undefined'){
     sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
