@@ -695,7 +695,7 @@ input[type=file]{display:none;}
 
 <div class="sheet-overlay" id="bankImportOverlay">
   <div class="sheet">
-    <h2>Importar movimientos</h2>
+    <div class="sheet-header"><button class="sheet-back" id="backBankImport"></button><h2>Importar movimientos</h2></div>
 
     <div id="bankStage1">
       <p style="color:var(--ink-soft); font-size:.85rem; margin:0 0 16px;">Elige el archivo Excel (.xlsx) o CSV que te has descargado del banco.</p>
@@ -705,7 +705,6 @@ input[type=file]{display:none;}
     <div id="bankStage2" style="display:none;">
       <label>Columna de fecha</label>
       <select id="bankColDate"></select>
-      <p class="hint" id="bankDateSample" style="margin-top:-4px;"></p>
       <label>Columna de importe</label>
       <select id="bankColAmount"></select>
       <label>Columna de concepto (opcional)</label>
@@ -728,7 +727,6 @@ input[type=file]{display:none;}
       <input type="date" id="bankDateTo">
 
       <div class="sheet-actions">
-        <button class="btn ghost" id="bankBackToStage1">Atrás</button>
         <button class="btn primary" id="bankPreviewBtn">Ver movimientos</button>
       </div>
     </div>
@@ -737,13 +735,8 @@ input[type=file]{display:none;}
       <div class="section-head"><h3 id="bankPreviewCount">0 movimientos</h3><button class="link" id="bankSelectAll">Seleccionar / quitar todos</button></div>
       <div id="bankPreviewList"></div>
       <div class="sheet-actions">
-        <button class="btn ghost" id="bankBackToStage2">Atrás</button>
         <button class="btn primary" id="bankConfirmImport">Importar seleccionados</button>
       </div>
-    </div>
-
-    <div class="sheet-actions">
-      <button class="btn ghost" id="closeBankImport">Cerrar</button>
     </div>
   </div>
 </div>
@@ -800,12 +793,14 @@ const K_BUD = 'libreta.presupuestos.v1';
 const K_THEME = 'libreta.theme.v1';
 const K_INITIAL = 'libreta.saldoinicial.v1';
 const K_LAST_USER = 'libreta.lastuser.v1';
+const K_LAST_EDIT = 'libreta.lastedit.v1';
+const K_LAST_PUSH = 'libreta.lastpush.v1';
 
 function load(key, fallback){
   try{ const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
   catch(e){ return fallback; }
 }
-function save(key, val){ localStorage.setItem(key, JSON.stringify(val)); scheduleCloudSync(); }
+function save(key, val){ localStorage.setItem(key, JSON.stringify(val)); localStorage.setItem(K_LAST_EDIT, String(Date.now())); scheduleCloudSync(); }
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 function fmtMoney(n){ return n.toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' €'; }
 function todayISO(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
@@ -879,6 +874,8 @@ applyTheme(theme);
 document.getElementById('darkToggle').addEventListener('change', (e)=>{
   theme = e.target.checked ? 'dark' : 'light';
   localStorage.setItem(K_THEME, theme);
+  localStorage.setItem(K_LAST_EDIT, String(Date.now()));
+  scheduleCloudSync();
   applyTheme(theme);
 });
 
@@ -889,6 +886,8 @@ initialBalanceInput.addEventListener('change', ()=>{
   const v = parseFloat(initialBalanceInput.value.replace(',', '.'));
   saldoInicial = isNaN(v) ? 0 : v;
   localStorage.setItem(K_INITIAL, saldoInicial);
+  localStorage.setItem(K_LAST_EDIT, String(Date.now()));
+  scheduleCloudSync();
   renderInicio();
   toast('Saldo inicial guardado');
 });
@@ -911,6 +910,7 @@ document.querySelector('.auth-icon').innerHTML = renderIcon('piggy-bank');
 document.getElementById('backBudgetOverlay').innerHTML = renderIcon('arrow-left');
 document.getElementById('backBudgetHistory').innerHTML = renderIcon('arrow-left');
 document.getElementById('backRecOverlay').innerHTML = renderIcon('arrow-left');
+document.getElementById('backBankImport').innerHTML = renderIcon('arrow-left');
 document.querySelectorAll('.tabbar button').forEach(btn=>{
   btn.addEventListener('pointerdown', (e)=>{
     const rect = btn.getBoundingClientRect();
@@ -1981,10 +1981,12 @@ document.getElementById('openBankImport').addEventListener('click', ()=>{
   document.getElementById('bankDateTo').value = '';
   bankImportOverlay.classList.add('open');
 });
-document.getElementById('closeBankImport').addEventListener('click', ()=> bankImportOverlay.classList.remove('open'));
+document.getElementById('backBankImport').addEventListener('click', ()=>{
+  if(document.getElementById('bankStage3').style.display === 'block'){ bankShowStage(2); }
+  else if(document.getElementById('bankStage2').style.display === 'block'){ bankShowStage(1); }
+  else { bankImportOverlay.classList.remove('open'); }
+});
 bankImportOverlay.addEventListener('click', (e)=>{ if(e.target===bankImportOverlay) bankImportOverlay.classList.remove('open'); });
-document.getElementById('bankBackToStage1').addEventListener('click', ()=> bankShowStage(1));
-document.getElementById('bankBackToStage2').addEventListener('click', ()=> bankShowStage(2));
 document.getElementById('bankPickFileBtn').addEventListener('click', ()=> document.getElementById('bankFileInput').click());
 
 document.getElementById('bankFileInput').addEventListener('change', (e)=>{
@@ -2034,20 +2036,7 @@ function fillBankColumnSelects(){
   if(amtIdx!==null) document.getElementById('bankColAmount').value = amtIdx;
   if(descIdx!==null) document.getElementById('bankColDesc').value = descIdx;
   if(catIdx!==null) document.getElementById('bankColCat').value = catIdx;
-  updateBankDateSample();
 }
-function updateBankDateSample(){
-  const idx = parseInt(document.getElementById('bankColDate').value);
-  const sampleEl = document.getElementById('bankDateSample');
-  if(isNaN(idx) || !bankWorkbookRows.length){ sampleEl.textContent = ''; return; }
-  const samples = bankWorkbookRows.slice(0,3).map(r=>{
-    const raw = r[idx];
-    const parsed = parseDateFlexible(raw);
-    return `"${raw instanceof Date ? raw.toString() : raw}" → ${parsed || 'no reconocida'}`;
-  });
-  sampleEl.innerHTML = 'Ejemplo: ' + samples.join(' · ');
-}
-document.getElementById('bankColDate').addEventListener('change', updateBankDateSample);
 
 const MONTH_NAMES_ES = {enero:1,ene:1,febrero:2,feb:2,marzo:3,mar:3,abril:4,abr:4,mayo:5,may:5,junio:6,jun:6,julio:7,jul:7,agosto:8,ago:8,septiembre:9,setiembre:9,sep:9,sept:9,octubre:10,oct:10,noviembre:11,nov:11,diciembre:12,dic:12};
 function parseDateFlexible(v){
@@ -2252,8 +2241,17 @@ try{
 function scheduleCloudSync(){
   if(!sb || !sbUser) return;
   clearTimeout(cloudSyncTimer);
-  cloudSyncTimer = setTimeout(()=>{ pushAllToCloud().catch(err=> console.error(err)); }, 1200);
+  cloudSyncTimer = setTimeout(()=>{ pushAllToCloud().catch(err=> console.error(err)); }, 600);
 }
+function flushCloudSyncNow(){
+  if(!sb || !sbUser) return;
+  clearTimeout(cloudSyncTimer);
+  const lastEdit = parseInt(localStorage.getItem(K_LAST_EDIT)) || 0;
+  const lastPush = parseInt(localStorage.getItem(K_LAST_PUSH)) || 0;
+  if(lastEdit > lastPush){ pushAllToCloud().catch(()=>{}); }
+}
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden) flushCloudSyncNow(); });
+window.addEventListener('pagehide', flushCloudSyncNow);
 function cloudDeleteMovimientos(ids){
   if(!sb || !sbUser || !ids.length) return;
   sb.from('movimientos').delete().in('id', ids).eq('user_id', sbUser.id).then(()=>{}).catch(err=> console.error(err));
@@ -2275,6 +2273,7 @@ async function pushAllToCloud(){
       await sb.from('movimientos').upsert(rows.slice(i, i+400));
     }
   }
+  localStorage.setItem(K_LAST_PUSH, String(Date.now()));
 }
 async function pullFromCloud(){
   if(!sb || !sbUser) return;
@@ -2300,6 +2299,8 @@ async function pullFromCloud(){
     movimientos = movs.map(r=> ({ id:r.id, type:r.type, amount:Number(r.amount), desc:r.description||'', category:r.category, date:r.date, created:Number(r.created) }));
     localStorage.setItem(K_MOV, JSON.stringify(movimientos));
   }
+  localStorage.setItem(K_LAST_EDIT, '0');
+  localStorage.setItem(K_LAST_PUSH, String(Date.now()));
   renderInicio(); renderMovimientos(); renderBudgets();
 }
 function updateCloudUI(user){
@@ -2329,6 +2330,8 @@ function resetLocalDataToBlank(){
   localStorage.setItem(K_INITIAL, saldoInicial);
   localStorage.setItem(K_CONCEPT_MAP, JSON.stringify(conceptMap));
   localStorage.setItem(K_SUBS, JSON.stringify(suscripciones));
+  localStorage.setItem(K_LAST_EDIT, '0');
+  localStorage.setItem(K_LAST_PUSH, '0');
   document.getElementById('initialBalanceInput').value = '';
 }
 async function onSignedIn(user){
@@ -2341,6 +2344,15 @@ async function onSignedIn(user){
   }
   localStorage.setItem(K_LAST_USER, user.id);
   try{
+    const lastEdit = parseInt(localStorage.getItem(K_LAST_EDIT)) || 0;
+    const lastPush = parseInt(localStorage.getItem(K_LAST_PUSH)) || 0;
+    if(lastEdit > lastPush){
+      // Hay cambios hechos en este dispositivo que todavía no se habían subido: los subimos
+      // primero para no perderlos, en vez de traer una copia más antigua de la nube.
+      await pushAllToCloud();
+      toast('Tus cambios pendientes se han subido a la nube');
+      return;
+    }
     const { data: existing } = await sb.from('user_data').select('user_id').eq('user_id', user.id).maybeSingle();
     if(existing){
       await pullFromCloud();
