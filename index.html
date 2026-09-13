@@ -121,6 +121,7 @@ svg.ico.lg{width:34px; height:34px; stroke-width:1.6;}
 .select-toggle.active{color:var(--red);}
 .list-header-row{display:flex; align-items:center; justify-content:space-between; margin:2px 2px 10px;}
 .list-header-row .hint{margin:0;}
+.search-row{display:flex; flex-direction:column; gap:8px; margin-bottom:12px;}
 .entry.selectable{cursor:pointer;}
 .entry .sel-check{width:20px; height:20px; border-radius:50%; border:2px solid var(--rule); flex:none; display:flex; align-items:center; justify-content:center; background:var(--card);}
 .entry.checked .sel-check{background:var(--primary); border-color:var(--primary);}
@@ -434,6 +435,10 @@ input[type=file]{display:none;}
   </div>
 
   <div id="listSection">
+    <div class="search-row">
+      <input id="movSearchInput" placeholder="Buscar por concepto o categoría...">
+      <select id="movSearchCategory"><option value="">Todas las categorías</option></select>
+    </div>
     <div class="list-header-row">
       <span id="listCount" class="hint"></span>
       <button class="select-toggle" id="selectModeBtn">Seleccionar</button>
@@ -1087,17 +1092,56 @@ document.getElementById('rangeApplyBtn').addEventListener('click', ()=>{
   toast('Rango aplicado');
 });
 
+let movSearchQuery = '';
+let movSearchCategory = '';
+function getFilteredListEntries(){
+  let entries = currentPeriodEntries();
+  if(movSearchQuery){
+    const q = movSearchQuery.toLowerCase();
+    entries = entries.filter(e=> (e.desc||'').toLowerCase().includes(q) || (e.category||'').toLowerCase().includes(q));
+  }
+  if(movSearchCategory){
+    entries = entries.filter(e=> e.category === movSearchCategory);
+  }
+  return entries;
+}
+function fillMovSearchCategorySelect(){
+  const sel = document.getElementById('movSearchCategory');
+  const current = sel.value;
+  const allCats = [...sortedCats('out'), ...sortedCats('in')];
+  const seen = new Set();
+  let opts = '<option value="">Todas las categorías</option>';
+  allCats.forEach(c=>{
+    if(seen.has(c.name)) return;
+    seen.add(c.name);
+    opts += `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`;
+  });
+  sel.innerHTML = opts;
+  sel.value = current;
+}
+document.getElementById('movSearchInput').addEventListener('input', (e)=>{
+  movSearchQuery = e.target.value.trim();
+  renderMovimientos();
+});
+document.getElementById('movSearchCategory').addEventListener('change', (e)=>{
+  movSearchCategory = e.target.value;
+  renderMovimientos();
+});
+
 function renderMovimientos(){
   monthLabelEl.textContent = currentPeriodLabel();
   document.getElementById('periodLabelDisplay').textContent = currentPeriodLabel();
-  const monthEntries = currentPeriodEntries().sort((a,b)=> b.date.localeCompare(a.date) || b.created - a.created);
+  fillMovSearchCategorySelect();
+  const monthEntries = getFilteredListEntries().sort((a,b)=> b.date.localeCompare(a.date) || b.created - a.created);
 
   document.getElementById('listCount').textContent = monthEntries.length + (monthEntries.length===1 ? ' movimiento' : ' movimientos');
 
   const list = document.getElementById('list');
   list.innerHTML = '';
   if(monthEntries.length===0){
-    list.innerHTML = '<div class="empty"><span class="big">＋</span>Sin movimientos en este periodo.<br>Toca el botón para añadir el primero.</div>';
+    list.innerHTML = (movSearchQuery || movSearchCategory)
+      ? '<div class="empty">No hay movimientos que coincidan con la búsqueda.</div>'
+      : '<div class="empty"><span class="big">＋</span>Sin movimientos en este periodo.<br>Toca el botón para añadir el primero.</div>';
     renderStats();
     return;
   }
@@ -1159,7 +1203,7 @@ document.getElementById('bulkCancel').addEventListener('click', ()=>{
   updateBulkBar();
 });
 document.getElementById('bulkSelectAll').addEventListener('click', ()=>{
-  currentPeriodEntries().forEach(e=> selectedIds.add(e.id));
+  getFilteredListEntries().forEach(e=> selectedIds.add(e.id));
   renderMovimientos();
   updateBulkBar();
 });
@@ -1338,7 +1382,21 @@ document.getElementById('saveBtn').addEventListener('click', ()=>{
   const date = document.getElementById('dateInput').value || todayISO();
   if(editingId){
     const idx = movimientos.findIndex(m=>m.id===editingId);
-    if(idx>-1) movimientos[idx] = {...movimientos[idx], type:currentType, amount, desc, category, date};
+    if(idx>-1){
+      const oldCategory = movimientos[idx].category;
+      movimientos[idx] = {...movimientos[idx], type:currentType, amount, desc, category, date};
+      if(oldCategory !== category && desc){
+        const sig = conceptSignature(desc);
+        const matches = movimientos.filter(m=> m.id!==editingId && m.type===currentType && (m.desc||'').trim() && conceptSignature(m.desc)===sig);
+        if(matches.length>0){
+          const n = matches.length;
+          if(confirm(`Este concepto se repite en ${n} movimiento${n===1?'':'s'} más. ¿Quieres cambiarles también la categoría a "${category}"?`)){
+            matches.forEach(m=> m.category = category);
+            learnConcept(currentType, desc, category);
+          }
+        }
+      }
+    }
   } else {
     movimientos.push({ id:uid(), type:currentType, amount, desc, category, date, created:Date.now() });
   }
@@ -2199,7 +2257,7 @@ document.getElementById('bankConfirmImport').addEventListener('click', ()=>{
 const calcOverlay = document.getElementById('calcOverlay');
 const calcDisplay = document.getElementById('calcDisplay');
 let calcExpr = '';
-document.getElementById('calcFab').addEventListener('click', ()=>{ calcExpr=''; calcDisplay.textContent='0'; calcOverlay.classList.add('open'); });
+document.getElementById('calcFab').addEventListener('click', ()=>{ calcOverlay.classList.add('open'); });
 document.getElementById('closeCalc').addEventListener('click', ()=> calcOverlay.classList.remove('open'));
 calcOverlay.addEventListener('click', (e)=>{ if(e.target===calcOverlay) calcOverlay.classList.remove('open'); });
 document.querySelectorAll('.calc-grid button').forEach(btn=>{
