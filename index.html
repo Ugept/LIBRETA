@@ -87,6 +87,16 @@ svg.ico.lg{width:34px; height:34px; stroke-width:1.6;}
 .stat-card .v.out{color:var(--red);}
 .balance-card{margin-bottom:18px; text-align:center; padding:18px 12px;}
 .balance-card .v{font-size:1.9rem; font-weight:800;}
+.cash-card{
+  display:flex; align-items:center; gap:12px; background:var(--card); border-radius:var(--radius-sm);
+  padding:13px 14px; margin-bottom:18px; box-shadow:0 4px 14px var(--shadow); cursor:pointer;
+}
+.cash-icon{width:40px; height:40px; border-radius:12px; background:var(--green-soft); flex:none; display:flex; align-items:center; justify-content:center;}
+.cash-icon svg.ico{stroke:var(--green);}
+.cash-info{flex:1;}
+.cash-info .k{font-size:.72rem; color:var(--ink-soft); margin-bottom:2px;}
+.cash-info .v{font-size:1.05rem; font-weight:700;}
+.cash-card .chev{color:var(--ink-soft); font-size:1.1rem;}
 
 .chart-card{
   background:var(--card); border-radius:var(--radius);
@@ -415,6 +425,11 @@ input[type=file]{display:none;}
     <div class="k">Saldo</div>
     <div class="v nums" id="hBal">0,00 €</div>
   </div>
+  <div class="cash-card" id="cashCard">
+    <span class="cash-icon" id="cashIcon"></span>
+    <div class="cash-info"><div class="k">Efectivo en casa</div><div class="v nums" id="cashAmountDisplay">0,00 €</div></div>
+    <span class="chev">›</span>
+  </div>
   <div class="chart-card">
     <h3>Evolución del saldo (últimos 6 meses)</h3>
     <div class="bars" id="barsChart"></div>
@@ -474,6 +489,18 @@ input[type=file]{display:none;}
     </div>
     <div class="sheet-actions" id="recDeleteRow" style="display:none;">
       <button class="btn danger" id="recDeleteBtn">Eliminar este recibo</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="cashOverlay">
+  <div class="sheet">
+    <div class="sheet-header"><button class="sheet-back" id="backCashOverlay"></button><h2>Efectivo en casa</h2></div>
+    <p class="hint" style="margin-bottom:6px;">Este importe es solo informativo: se guarda aparte y no afecta a tus movimientos, estadísticas ni presupuestos.</p>
+    <label style="margin-top:10px;">Cantidad</label>
+    <input class="nums" id="cashAmountInput" inputmode="decimal" placeholder="0,00">
+    <div class="sheet-actions">
+      <button class="btn primary" id="cashSaveBtn">Guardar</button>
     </div>
   </div>
 </div>
@@ -861,6 +888,8 @@ let categorias = load(K_CAT, defaultCategorias());
 migrateCategorias();
 let presupuestos = load(K_BUD, []);
 let saldoInicial = parseFloat(localStorage.getItem(K_INITIAL)) || 0;
+const K_CASH = 'libreta.efectivo.v1';
+let efectivoCasa = parseFloat(localStorage.getItem(K_CASH)) || 0;
 let viewDate = new Date(); viewDate.setDate(1);
 let editingId = null;
 let currentType = 'in';
@@ -904,6 +933,29 @@ initialBalanceInput.addEventListener('change', ()=>{
   toast('Saldo inicial guardado');
 });
 
+/* ============ EFECTIVO EN CASA ============ */
+function renderCashCard(){
+  document.getElementById('cashAmountDisplay').textContent = fmtMoney(efectivoCasa);
+}
+const cashOverlay = document.getElementById('cashOverlay');
+document.getElementById('cashCard').addEventListener('click', ()=>{
+  document.getElementById('cashAmountInput').value = efectivoCasa ? String(efectivoCasa).replace('.', ',') : '';
+  cashOverlay.classList.add('open');
+  setTimeout(()=> document.getElementById('cashAmountInput').focus(), 50);
+});
+document.getElementById('backCashOverlay').addEventListener('click', ()=> cashOverlay.classList.remove('open'));
+cashOverlay.addEventListener('click', (e)=>{ if(e.target===cashOverlay) cashOverlay.classList.remove('open'); });
+document.getElementById('cashSaveBtn').addEventListener('click', ()=>{
+  const v = parseFloat(document.getElementById('cashAmountInput').value.replace(',', '.'));
+  efectivoCasa = isNaN(v) ? 0 : v;
+  localStorage.setItem(K_CASH, efectivoCasa);
+  localStorage.setItem(K_LAST_EDIT, String(Date.now()));
+  scheduleCloudSync();
+  renderCashCard();
+  cashOverlay.classList.remove('open');
+  toast('Efectivo actualizado');
+});
+
 /* ============ TAB BAR ICONS ============ */
 document.querySelectorAll('.tab-btn').forEach(b=>{
   b.insertAdjacentHTML('afterbegin', renderIcon(b.dataset.ic));
@@ -923,6 +975,8 @@ document.getElementById('backBudgetOverlay').innerHTML = renderIcon('arrow-left'
 document.getElementById('backBudgetHistory').innerHTML = renderIcon('arrow-left');
 document.getElementById('backRecOverlay').innerHTML = renderIcon('arrow-left');
 document.getElementById('backBankImport').innerHTML = renderIcon('arrow-left');
+document.getElementById('cashIcon').innerHTML = renderIcon('wallet');
+document.getElementById('backCashOverlay').innerHTML = renderIcon('arrow-left');
 document.querySelectorAll('.tabbar button').forEach(btn=>{
   btn.addEventListener('pointerdown', (e)=>{
     const rect = btn.getBoundingClientRect();
@@ -987,6 +1041,7 @@ document.querySelector('.tabbar').addEventListener('touchmove', (e)=>{
 function monthRange(date){ return { y:date.getFullYear(), m:date.getMonth() }; }
 function isInMonth(dateStr, y, m){ const d = new Date(dateStr+'T00:00:00'); return d.getFullYear()===y && d.getMonth()===m; }
 function renderInicio(){
+  renderCashCard();
   const now = new Date();
   const {y, m} = monthRange(now);
   const monthEntries = movimientos.filter(e=> isInMonth(e.date, y, m));
@@ -2333,6 +2388,7 @@ async function pushAllToCloud(){
     user_id: sbUser.id,
     categorias, presupuestos,
     saldo_inicial: saldoInicial,
+    efectivo: efectivoCasa,
     concept_map: conceptMap,
     suscripciones,
     theme,
@@ -2364,12 +2420,14 @@ async function pullFromCloud(){
     if(ud.categorias) categorias = ud.categorias;
     if(ud.presupuestos) presupuestos = ud.presupuestos;
     if(ud.saldo_inicial !== null && ud.saldo_inicial !== undefined) saldoInicial = Number(ud.saldo_inicial);
+    if(ud.efectivo !== null && ud.efectivo !== undefined) efectivoCasa = Number(ud.efectivo);
     if(ud.concept_map) conceptMap = ud.concept_map;
     if(ud.suscripciones) suscripciones = ud.suscripciones;
     if(ud.theme) theme = ud.theme;
     localStorage.setItem(K_CAT, JSON.stringify(categorias));
     localStorage.setItem(K_BUD, JSON.stringify(presupuestos));
     localStorage.setItem(K_INITIAL, saldoInicial);
+    localStorage.setItem(K_CASH, efectivoCasa);
     localStorage.setItem(K_CONCEPT_MAP, JSON.stringify(conceptMap));
     localStorage.setItem(K_SUBS, JSON.stringify(suscripciones));
     localStorage.setItem(K_THEME, theme);
@@ -2404,12 +2462,14 @@ function resetLocalDataToBlank(){
   categorias = defaultCategorias();
   presupuestos = [];
   saldoInicial = 0;
+  efectivoCasa = 0;
   conceptMap = {};
   suscripciones = [];
   localStorage.setItem(K_MOV, JSON.stringify(movimientos));
   localStorage.setItem(K_CAT, JSON.stringify(categorias));
   localStorage.setItem(K_BUD, JSON.stringify(presupuestos));
   localStorage.setItem(K_INITIAL, saldoInicial);
+  localStorage.setItem(K_CASH, efectivoCasa);
   localStorage.setItem(K_CONCEPT_MAP, JSON.stringify(conceptMap));
   localStorage.setItem(K_SUBS, JSON.stringify(suscripciones));
   localStorage.setItem(K_LAST_EDIT, '0');
