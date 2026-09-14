@@ -87,6 +87,12 @@ svg.ico.lg{width:34px; height:34px; stroke-width:1.6;}
 .stat-card .v.out{color:var(--red);}
 .balance-card{margin-bottom:18px; text-align:center; padding:18px 12px;}
 .balance-card .v{font-size:1.9rem; font-weight:800;}
+.real-balance-row{display:flex; justify-content:space-between; margin-top:12px; padding-top:12px; border-top:1px solid var(--rule); font-size:.8rem; color:var(--ink-soft);}
+.goal-card{background:var(--card); border-radius:var(--radius); padding:18px; margin-bottom:16px; box-shadow:0 6px 18px var(--shadow);}
+.goal-card-top{display:flex; justify-content:space-between; align-items:flex-start; gap:10px;}
+.goal-name{font-size:1.05rem; font-weight:800;}
+.goal-sub{font-size:.78rem; color:var(--ink-soft); margin-top:2px;}
+.edit-link{background:none; border:none; color:var(--primary); font-size:.82rem; font-weight:700; cursor:pointer; flex:none;}
 .cash-card{
   display:flex; align-items:center; gap:12px; background:var(--card); border-radius:var(--radius-sm);
   padding:13px 14px; margin-bottom:18px; box-shadow:0 4px 14px var(--shadow); cursor:pointer;
@@ -261,6 +267,7 @@ svg.ico.lg{width:34px; height:34px; stroke-width:1.6;}
 .rec-row .amt{text-align:right;}
 .rec-row .amt .a1{font-size:.93rem; font-weight:700;}
 .rec-row .amt .a2{font-size:.7rem; color:var(--ink-soft);}
+.hist-del{background:none; border:none; color:var(--ink-soft); font-size:.95rem; cursor:pointer; flex:none; padding:4px;}
 .rec-add-btn{display:block; width:100%; margin-top:4px;}
 
 .icon-picker{display:grid; grid-template-columns:repeat(6,1fr); gap:8px; margin-top:4px;}
@@ -416,14 +423,15 @@ input[type=file]{display:none;}
 
 <!-- ===== INICIO ===== -->
 <section class="page active" id="page-inicio">
-  <div class="topbar"><h1>LIBRETA</h1><span class="spacer"></span></div>
+  <div class="topbar"><h1>LIBRETA</h1><button class="icon-btn" id="openMasOverlay"></button></div>
   <div class="stat-row">
     <div class="stat-card"><div class="k">Ingresos</div><div class="v in nums" id="hIn">0,00 €</div></div>
     <div class="stat-card"><div class="k">Gastos</div><div class="v out nums" id="hOut">0,00 €</div></div>
   </div>
   <div class="stat-card balance-card">
-    <div class="k">Saldo</div>
+    <div class="k">Saldo total</div>
     <div class="v nums" id="hBal">0,00 €</div>
+    <div class="real-balance-row"><span>Saldo real (sin lo ahorrado)</span><span class="nums" id="hBalReal">0,00 €</span></div>
   </div>
   <div class="cash-card" id="cashCard">
     <span class="cash-icon" id="cashIcon"></span>
@@ -556,42 +564,141 @@ input[type=file]{display:none;}
 </section>
 
 <!-- ===== MÁS ===== -->
-<section class="page" id="page-mas">
-  <div class="topbar"><h1>Más</h1><span class="spacer"></span></div>
-  <div class="more-group">
-    <div class="more-item more-item-col">
-      <span>Cuenta</span>
-      <p class="hint" id="cloudStatus">Sin conexión con la nube.</p>
-      <button class="btn ghost" id="cloudSignOutBtn" style="width:100%; margin-top:4px; display:none;">Cerrar sesión</button>
+<section class="page" id="page-ahorro">
+  <div class="topbar"><h1>AHORRO</h1><span class="spacer"></span></div>
+
+  <div class="goal-card" id="goalCard">
+    <div class="goal-card-top">
+      <div>
+        <div class="goal-name" id="goalNameDisplay">Sin objetivo definido</div>
+        <div class="goal-sub" id="goalSubDisplay">Toca "Editar" para ponerte uno</div>
+      </div>
+      <button class="edit-link" id="editGoalBtn">Editar</button>
     </div>
+    <div class="progress-track" id="goalProgressWrap" style="margin-top:12px; display:none;"><div class="progress-fill" id="goalProgressFill" style="width:0%"></div></div>
+    <div class="meta" id="goalMetaWrap" style="margin-top:6px; display:none;"><span class="nums" id="goalSavedAmt">0,00 €</span><span class="nums" id="goalTargetAmt">de 0,00 €</span></div>
   </div>
+
+  <div class="rec-total-card" style="text-align:center;">
+    <div class="k">ahorrado hasta ahora</div>
+    <div class="v nums" id="ahorroTotalDisplay">0,00 €</div>
+  </div>
+
   <div class="more-group">
-    <div class="more-item"><span>Modo oscuro</span><label class="switch"><input type="checkbox" id="darkToggle"><span class="track"></span></label></div>
+    <div class="more-item"><button class="item-btn" id="openRecurringSheet">Aportación automática <span class="chev">›</span></button></div>
   </div>
-  <div class="more-group">
-    <div class="more-item more-item-col">
-      <span>Saldo inicial</span>
-      <input class="nums" id="initialBalanceInput" inputmode="decimal" placeholder="0,00">
-      <p class="hint">El saldo que tenías antes de tu primer movimiento registrado. Se suma al total, pero no cuenta como ingreso ni gasto ni entra en las estadísticas.</p>
-    </div>
-  </div>
-  <div class="more-group">
-    <div class="more-item"><button class="item-btn" id="openCats">Gestionar categorías <span class="chev">›</span></button></div>
-    <div class="more-item"><button class="item-btn" id="openConceptGroups">Categorizar por concepto repetido <span class="chev">›</span></button></div>
-    <div class="more-item"><button class="item-btn" id="openBankImport">Importar movimientos (Excel/CSV) <span class="chev">›</span></button></div>
-    <div class="more-item"><button class="item-btn" id="exportBtn">Exportar copia de seguridad (.json) <span class="chev">›</span></button></div>
-    <div class="more-item"><button class="item-btn" id="importBtn">Importar copia de seguridad <span class="chev">›</span></button></div>
-    <div class="more-item" id="installRow" style="display:none;"><button class="item-btn" id="installBtn">Instalar la app <span class="chev">›</span></button></div>
-  </div>
+
+  <button class="btn primary" id="addManualSavingBtn" style="width:100%; margin-bottom:18px;">+ Añadir a la hucha</button>
+
+  <div class="section-head"><h3>Historial</h3></div>
+  <div id="ahorroHistoryList"></div>
 </section>
+
+<div class="sheet-overlay" id="goalOverlay">
+  <div class="sheet">
+    <div class="sheet-header"><button class="sheet-back" id="backGoalOverlay"></button><h2>Objetivo de ahorro</h2></div>
+    <label style="margin-top:0;">¿Para qué ahorras?</label>
+    <input id="goalNameInput" placeholder="p. ej. Vacaciones en Japón">
+    <label>Cantidad objetivo</label>
+    <input class="nums" id="goalAmountInput" inputmode="decimal" placeholder="0,00">
+    <label>Fecha en la que quieres lograrlo</label>
+    <input type="date" id="goalDateInput">
+    <div class="sheet-actions">
+      <button class="btn primary" id="goalSaveBtn">Guardar objetivo</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="recurringOverlay">
+  <div class="sheet">
+    <div class="sheet-header"><button class="sheet-back" id="backRecurringOverlay"></button><h2>Aportación automática</h2></div>
+    <p class="hint" style="margin-bottom:10px;">Cada vez que abras la app, se añaden a tu hucha las aportaciones que tocaban desde la última vez.</p>
+    <div class="more-item" style="padding:10px 2px; border:none;">
+      <span>Activar</span>
+      <label class="switch"><input type="checkbox" id="recurringEnabled"><span class="track"></span></label>
+    </div>
+    <div id="recurringFields" style="display:none;">
+      <label style="margin-top:0;">Cantidad</label>
+      <input class="nums" id="recurringAmount" inputmode="decimal" placeholder="0,00">
+      <label>Frecuencia</label>
+      <select id="recurringFrequency">
+        <option value="monthly">Mensual</option>
+        <option value="weekly">Semanal</option>
+      </select>
+      <div id="recurringMonthlyRow">
+        <label>Día del mes</label>
+        <input class="nums" id="recurringDayOfMonth" inputmode="numeric" placeholder="27">
+      </div>
+      <div id="recurringWeeklyRow" style="display:none;">
+        <label>Día de la semana</label>
+        <select id="recurringDayOfWeek">
+          <option value="1">Lunes</option>
+          <option value="2">Martes</option>
+          <option value="3">Miércoles</option>
+          <option value="4">Jueves</option>
+          <option value="5">Viernes</option>
+          <option value="6">Sábado</option>
+          <option value="0">Domingo</option>
+        </select>
+      </div>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn primary" id="recurringSaveBtn">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="manualSavingOverlay">
+  <div class="sheet">
+    <div class="sheet-header"><button class="sheet-back" id="backManualSaving"></button><h2>Añadir a la hucha</h2></div>
+    <label style="margin-top:0;">Cantidad</label>
+    <input class="nums" id="manualSavingAmount" inputmode="decimal" placeholder="0,00">
+    <label>Nota (opcional)</label>
+    <input id="manualSavingNote" placeholder="p. ej. Paga extra">
+    <div class="sheet-actions">
+      <button class="btn primary" id="manualSavingSaveBtn">Añadir</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="masOverlay">
+  <div class="sheet">
+    <div class="sheet-header"><button class="sheet-back" id="backMasOverlay"></button><h2>Más</h2></div>
+    <div class="more-group">
+      <div class="more-item more-item-col">
+        <span>Cuenta</span>
+        <p class="hint" id="cloudStatus">Sin conexión con la nube.</p>
+        <button class="btn ghost" id="cloudSignOutBtn" style="width:100%; margin-top:4px; display:none;">Cerrar sesión</button>
+      </div>
+    </div>
+    <div class="more-group">
+      <div class="more-item"><span>Modo oscuro</span><label class="switch"><input type="checkbox" id="darkToggle"><span class="track"></span></label></div>
+    </div>
+    <div class="more-group">
+      <div class="more-item more-item-col">
+        <span>Saldo inicial</span>
+        <input class="nums" id="initialBalanceInput" inputmode="decimal" placeholder="0,00">
+        <p class="hint">El saldo que tenías antes de tu primer movimiento registrado. Se suma al total, pero no cuenta como ingreso ni gasto ni entra en las estadísticas.</p>
+      </div>
+    </div>
+    <div class="more-group">
+      <div class="more-item"><button class="item-btn" id="openCats">Gestionar categorías <span class="chev">›</span></button></div>
+      <div class="more-item"><button class="item-btn" id="openConceptGroups">Categorizar por concepto repetido <span class="chev">›</span></button></div>
+      <div class="more-item"><button class="item-btn" id="openBankImport">Importar movimientos (Excel/CSV) <span class="chev">›</span></button></div>
+      <div class="more-item"><button class="item-btn" id="exportBtn">Exportar copia de seguridad (.json) <span class="chev">›</span></button></div>
+      <div class="more-item"><button class="item-btn" id="importBtn">Importar copia de seguridad <span class="chev">›</span></button></div>
+      <div class="more-item" id="installRow" style="display:none;"><button class="item-btn" id="installBtn">Instalar la app <span class="chev">›</span></button></div>
+    </div>
+  </div>
+</div>
 
 <input type="file" id="importFile" accept="application/json">
 
 <nav class="tabbar">
-  <button class="tab-btn active" data-tab="inicio" data-ic="piggy-bank">Libreta</button>
+  <button class="tab-btn active" data-tab="inicio" data-ic="notebook">Libreta</button>
   <button class="tab-btn" data-tab="movimientos" data-ic="arrow-right-left">Movimientos</button>
   <button class="tab-btn" data-tab="presupuestos" data-ic="sprout">Presupuestos</button>
-  <button class="tab-btn" data-tab="mas" data-ic="square-plus">Más</button>
+  <button class="tab-btn" data-tab="ahorro" data-ic="piggy-bank">Ahorro</button>
 </nav>
 
 <button class="fab" id="addBtn"></button>
@@ -805,6 +912,8 @@ const ICON_PATHS = {
   'credit-card': '<rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>',
   'repeat': '<path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/>',
   'more-horizontal': '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
+  'notebook': '<path d="M2 6h4"/><path d="M2 10h4"/><path d="M2 14h4"/><path d="M2 18h4"/><rect width="16" height="20" x="4" y="2" rx="2"/><path d="M16 2v20"/>',
+  'menu': '<line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/>',
   'gamepad-2': '<line x1="6" x2="10" y1="11" y2="11"/><line x1="8" x2="8" y1="9" y2="13"/><line x1="15" x2="15.01" y1="12" y2="12"/><line x1="18" x2="18.01" y1="10" y2="10"/><path d="M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.151A4 4 0 0 0 17.32 5z"/>',
   'arrow-left': '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
   'plus': '<path d="M5 12h14"/><path d="M12 5v14"/>',
@@ -956,6 +1065,196 @@ document.getElementById('cashSaveBtn').addEventListener('click', ()=>{
   toast('Efectivo actualizado');
 });
 
+/* ============ AHORRO ============ */
+const K_AHORRO = 'libreta.ahorro.v1';
+function defaultAhorro(){
+  return {
+    goal: { name:'', amount:0, date:'' },
+    recurring: { enabled:false, amount:0, frequency:'monthly', dayOfMonth:1, dayOfWeek:1, nextDueDate:null },
+    total: 0,
+    history: []
+  };
+}
+let ahorro = load(K_AHORRO, defaultAhorro());
+function saveAhorro(){ save(K_AHORRO, ahorro); }
+
+function addMonthsClamped(dateISO, months, targetDay){
+  const d = new Date(dateISO+'T00:00:00');
+  let y = d.getFullYear(), m = d.getMonth() + months;
+  y += Math.floor(m/12); m = ((m%12)+12)%12;
+  const lastDay = new Date(y, m+1, 0).getDate();
+  const day = Math.min(targetDay, lastDay);
+  return isoFromDate(new Date(y, m, day));
+}
+function nextWeekday(fromISO, weekday){
+  const d = new Date(fromISO+'T00:00:00');
+  const diff = (weekday - d.getDay() + 7) % 7;
+  d.setDate(d.getDate() + (diff===0?7:diff));
+  return isoFromDate(d);
+}
+function computeInitialNextDue(){
+  const r = ahorro.recurring;
+  const today = todayISO();
+  if(r.frequency==='monthly'){
+    const thisMonth = addMonthsClamped(today, 0, r.dayOfMonth);
+    return thisMonth >= today ? thisMonth : addMonthsClamped(today, 1, r.dayOfMonth);
+  }
+  const d = new Date(today+'T00:00:00');
+  if(d.getDay() === r.dayOfWeek) return today;
+  return nextWeekday(today, r.dayOfWeek);
+}
+function processAutoContributions(){
+  const r = ahorro.recurring;
+  if(!r.enabled || !r.nextDueDate) return;
+  const today = todayISO();
+  let changed = false;
+  let guard = 0;
+  while(r.nextDueDate && r.nextDueDate <= today && guard < 500){
+    ahorro.total += r.amount;
+    ahorro.history.unshift({ id:uid(), date:r.nextDueDate, amount:r.amount, auto:true, note:'' });
+    r.nextDueDate = r.frequency==='monthly'
+      ? addMonthsClamped(r.nextDueDate, 1, r.dayOfMonth)
+      : (()=>{ const d=new Date(r.nextDueDate+'T00:00:00'); d.setDate(d.getDate()+7); return isoFromDate(d); })();
+    changed = true;
+    guard++;
+  }
+  if(changed) saveAhorro();
+}
+
+function renderAhorro(){
+  processAutoContributions();
+  document.getElementById('ahorroTotalDisplay').textContent = fmtMoney(ahorro.total);
+
+  const g = ahorro.goal;
+  if(g.name){
+    document.getElementById('goalNameDisplay').textContent = g.name;
+    const dateTxt = g.date ? ' · para el ' + new Date(g.date+'T00:00:00').toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'}) : '';
+    document.getElementById('goalSubDisplay').textContent = fmtMoney(g.amount) + dateTxt;
+    document.getElementById('goalProgressWrap').style.display = 'block';
+    document.getElementById('goalMetaWrap').style.display = 'flex';
+    const pct = g.amount>0 ? Math.min(100, Math.round((ahorro.total/g.amount)*100)) : 0;
+    document.getElementById('goalProgressFill').style.width = pct + '%';
+    document.getElementById('goalSavedAmt').textContent = fmtMoney(ahorro.total);
+    document.getElementById('goalTargetAmt').textContent = 'de ' + fmtMoney(g.amount);
+  } else {
+    document.getElementById('goalNameDisplay').textContent = 'Sin objetivo definido';
+    document.getElementById('goalSubDisplay').textContent = 'Toca "Editar" para ponerte uno';
+    document.getElementById('goalProgressWrap').style.display = 'none';
+    document.getElementById('goalMetaWrap').style.display = 'none';
+  }
+
+  const histWrap = document.getElementById('ahorroHistoryList');
+  if(ahorro.history.length===0){
+    histWrap.innerHTML = '<div class="empty">Aún no has añadido nada a la hucha.</div>';
+  } else {
+    histWrap.innerHTML = ahorro.history.slice(0,30).map(h=>`
+      <div class="rec-row" data-id="${h.id}" style="cursor:default;">
+        <span class="cat-icon" style="background:var(--green-soft)">${renderIcon(h.auto?'repeat':'plus')}</span>
+        <span class="desc"><div class="t">${h.auto ? 'Aportación automática' : (h.note ? escapeHtml(h.note) : 'Añadido a mano')}</div><div class="c">${new Date(h.date+'T00:00:00').toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'})}</div></span>
+        <span class="amt"><div class="a1 nums in">+${fmtMoney(h.amount)}</div></span>
+        <button class="hist-del" data-id="${h.id}">✕</button>
+      </div>`).join('');
+    histWrap.querySelectorAll('.hist-del').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        const id = btn.dataset.id;
+        const item = ahorro.history.find(h=>h.id===id);
+        if(!item) return;
+        if(!confirm('¿Quitar esta aportación de ' + fmtMoney(item.amount) + '?')) return;
+        ahorro.total -= item.amount;
+        ahorro.history = ahorro.history.filter(h=>h.id!==id);
+        saveAhorro();
+        renderAhorro();
+        renderInicio();
+      });
+    });
+  }
+}
+
+const goalOverlay = document.getElementById('goalOverlay');
+document.getElementById('editGoalBtn').addEventListener('click', ()=>{
+  document.getElementById('goalNameInput').value = ahorro.goal.name;
+  document.getElementById('goalAmountInput').value = ahorro.goal.amount ? String(ahorro.goal.amount).replace('.', ',') : '';
+  document.getElementById('goalDateInput').value = ahorro.goal.date || '';
+  goalOverlay.classList.add('open');
+});
+document.getElementById('backGoalOverlay').addEventListener('click', ()=> goalOverlay.classList.remove('open'));
+goalOverlay.addEventListener('click', (e)=>{ if(e.target===goalOverlay) goalOverlay.classList.remove('open'); });
+document.getElementById('goalSaveBtn').addEventListener('click', ()=>{
+  const name = document.getElementById('goalNameInput').value.trim();
+  const amount = parseFloat(document.getElementById('goalAmountInput').value.replace(',','.')) || 0;
+  const date = document.getElementById('goalDateInput').value;
+  ahorro.goal = { name, amount, date };
+  saveAhorro();
+  goalOverlay.classList.remove('open');
+  renderAhorro();
+  toast('Objetivo guardado');
+});
+
+const recurringOverlay = document.getElementById('recurringOverlay');
+document.getElementById('openRecurringSheet').addEventListener('click', ()=>{
+  const r = ahorro.recurring;
+  document.getElementById('recurringEnabled').checked = r.enabled;
+  document.getElementById('recurringAmount').value = r.amount ? String(r.amount).replace('.', ',') : '';
+  document.getElementById('recurringFrequency').value = r.frequency;
+  document.getElementById('recurringDayOfMonth').value = r.dayOfMonth || '';
+  document.getElementById('recurringDayOfWeek').value = String(r.dayOfWeek);
+  document.getElementById('recurringFields').style.display = r.enabled ? 'block' : 'none';
+  document.getElementById('recurringMonthlyRow').style.display = r.frequency==='monthly' ? 'block' : 'none';
+  document.getElementById('recurringWeeklyRow').style.display = r.frequency==='weekly' ? 'block' : 'none';
+  recurringOverlay.classList.add('open');
+});
+document.getElementById('backRecurringOverlay').addEventListener('click', ()=> recurringOverlay.classList.remove('open'));
+recurringOverlay.addEventListener('click', (e)=>{ if(e.target===recurringOverlay) recurringOverlay.classList.remove('open'); });
+document.getElementById('recurringEnabled').addEventListener('change', (e)=>{
+  document.getElementById('recurringFields').style.display = e.target.checked ? 'block' : 'none';
+});
+document.getElementById('recurringFrequency').addEventListener('change', (e)=>{
+  document.getElementById('recurringMonthlyRow').style.display = e.target.value==='monthly' ? 'block' : 'none';
+  document.getElementById('recurringWeeklyRow').style.display = e.target.value==='weekly' ? 'block' : 'none';
+});
+document.getElementById('recurringSaveBtn').addEventListener('click', ()=>{
+  const enabled = document.getElementById('recurringEnabled').checked;
+  const amount = parseFloat(document.getElementById('recurringAmount').value.replace(',','.'));
+  const frequency = document.getElementById('recurringFrequency').value;
+  const dayOfMonth = parseInt(document.getElementById('recurringDayOfMonth').value) || 1;
+  const dayOfWeek = parseInt(document.getElementById('recurringDayOfWeek').value);
+  if(enabled && (isNaN(amount) || amount<=0)){ toast('Introduce una cantidad válida'); return; }
+  if(enabled && frequency==='monthly' && (dayOfMonth<1 || dayOfMonth>31)){ toast('El día del mes debe estar entre 1 y 31'); return; }
+  const wasEnabled = ahorro.recurring.enabled;
+  ahorro.recurring = { enabled, amount: amount||0, frequency, dayOfMonth, dayOfWeek, nextDueDate: ahorro.recurring.nextDueDate };
+  if(enabled && (!wasEnabled || !ahorro.recurring.nextDueDate)){
+    ahorro.recurring.nextDueDate = computeInitialNextDue();
+  }
+  if(!enabled){ ahorro.recurring.nextDueDate = null; }
+  saveAhorro();
+  recurringOverlay.classList.remove('open');
+  renderAhorro();
+  toast('Aportación automática guardada');
+});
+
+const manualSavingOverlay = document.getElementById('manualSavingOverlay');
+document.getElementById('addManualSavingBtn').addEventListener('click', ()=>{
+  document.getElementById('manualSavingAmount').value = '';
+  document.getElementById('manualSavingNote').value = '';
+  manualSavingOverlay.classList.add('open');
+  setTimeout(()=> document.getElementById('manualSavingAmount').focus(), 50);
+});
+document.getElementById('backManualSaving').addEventListener('click', ()=> manualSavingOverlay.classList.remove('open'));
+manualSavingOverlay.addEventListener('click', (e)=>{ if(e.target===manualSavingOverlay) manualSavingOverlay.classList.remove('open'); });
+document.getElementById('manualSavingSaveBtn').addEventListener('click', ()=>{
+  const amount = parseFloat(document.getElementById('manualSavingAmount').value.replace(',','.'));
+  const note = document.getElementById('manualSavingNote').value.trim();
+  if(isNaN(amount) || amount<=0){ toast('Introduce una cantidad válida'); return; }
+  ahorro.total += amount;
+  ahorro.history.unshift({ id:uid(), date:todayISO(), amount, auto:false, note });
+  saveAhorro();
+  manualSavingOverlay.classList.remove('open');
+  renderAhorro();
+  renderInicio();
+  toast('Añadido a la hucha');
+});
+
 /* ============ TAB BAR ICONS ============ */
 document.querySelectorAll('.tab-btn').forEach(b=>{
   b.insertAdjacentHTML('afterbegin', renderIcon(b.dataset.ic));
@@ -976,6 +1275,11 @@ document.getElementById('backBudgetHistory').innerHTML = renderIcon('arrow-left'
 document.getElementById('backRecOverlay').innerHTML = renderIcon('arrow-left');
 document.getElementById('backBankImport').innerHTML = renderIcon('arrow-left');
 document.getElementById('cashIcon').innerHTML = renderIcon('wallet');
+document.getElementById('openMasOverlay').innerHTML = renderIcon('menu');
+document.getElementById('backMasOverlay').innerHTML = renderIcon('arrow-left');
+document.getElementById('backGoalOverlay').innerHTML = renderIcon('arrow-left');
+document.getElementById('backRecurringOverlay').innerHTML = renderIcon('arrow-left');
+document.getElementById('backManualSaving').innerHTML = renderIcon('arrow-left');
 document.getElementById('backCashOverlay').innerHTML = renderIcon('arrow-left');
 document.querySelectorAll('.tabbar button').forEach(btn=>{
   btn.addEventListener('pointerdown', (e)=>{
@@ -1003,11 +1307,12 @@ function switchTab(tab){
   if(tab==='inicio') renderInicio();
   if(tab==='movimientos') renderMovimientos();
   if(tab==='presupuestos') renderBudgets();
+  if(tab==='ahorro') renderAhorro();
 }
 tabButtons.forEach(b=> b.addEventListener('click', ()=> switchTab(b.dataset.tab)));
 
 /* ---- deslizar entre páginas y arrastrar en la barra inferior ---- */
-const TAB_ORDER = ['inicio','movimientos','presupuestos','mas'];
+const TAB_ORDER = ['inicio','movimientos','presupuestos','ahorro'];
 let touchStartX = 0, touchStartY = 0, touchActive = false;
 document.querySelectorAll('.page').forEach(page=>{
   page.addEventListener('touchstart', (e)=>{
@@ -1042,6 +1347,7 @@ function monthRange(date){ return { y:date.getFullYear(), m:date.getMonth() }; }
 function isInMonth(dateStr, y, m){ const d = new Date(dateStr+'T00:00:00'); return d.getFullYear()===y && d.getMonth()===m; }
 function renderInicio(){
   renderCashCard();
+  processAutoContributions();
   const now = new Date();
   const {y, m} = monthRange(now);
   const monthEntries = movimientos.filter(e=> isInMonth(e.date, y, m));
@@ -1052,6 +1358,7 @@ function renderInicio(){
   document.getElementById('hIn').textContent = fmtMoney(monthIn);
   document.getElementById('hOut').textContent = fmtMoney(monthOut);
   document.getElementById('hBal').textContent = fmtMoney(totalBalance);
+  document.getElementById('hBalReal').textContent = fmtMoney(totalBalance - ahorro.total);
 
   const bars = document.getElementById('barsChart');
   bars.innerHTML = '';
@@ -1745,6 +2052,10 @@ document.getElementById('saveBudget').addEventListener('click', ()=>{
 
 /* ============ GESTIONAR CATEGORÍAS ============ */
 const catManageOverlay = document.getElementById('catManageOverlay');
+const masOverlay = document.getElementById('masOverlay');
+document.getElementById('openMasOverlay').addEventListener('click', ()=> masOverlay.classList.add('open'));
+document.getElementById('backMasOverlay').addEventListener('click', ()=> masOverlay.classList.remove('open'));
+masOverlay.addEventListener('click', (e)=>{ if(e.target===masOverlay) masOverlay.classList.remove('open'); });
 document.getElementById('openCats').addEventListener('click', ()=>{ editingCatManageType='in'; resetCatForm(); renderCatManage(); catManageOverlay.classList.add('open'); });
 document.getElementById('backCatManage').addEventListener('click', ()=> catManageOverlay.classList.remove('open'));
 catManageOverlay.addEventListener('click', (e)=>{ if(e.target===catManageOverlay) catManageOverlay.classList.remove('open'); });
@@ -2389,6 +2700,7 @@ async function pushAllToCloud(){
     categorias, presupuestos,
     saldo_inicial: saldoInicial,
     efectivo: efectivoCasa,
+    ahorro,
     concept_map: conceptMap,
     suscripciones,
     theme,
@@ -2421,6 +2733,7 @@ async function pullFromCloud(){
     if(ud.presupuestos) presupuestos = ud.presupuestos;
     if(ud.saldo_inicial !== null && ud.saldo_inicial !== undefined) saldoInicial = Number(ud.saldo_inicial);
     if(ud.efectivo !== null && ud.efectivo !== undefined) efectivoCasa = Number(ud.efectivo);
+    if(ud.ahorro) ahorro = ud.ahorro;
     if(ud.concept_map) conceptMap = ud.concept_map;
     if(ud.suscripciones) suscripciones = ud.suscripciones;
     if(ud.theme) theme = ud.theme;
@@ -2428,6 +2741,7 @@ async function pullFromCloud(){
     localStorage.setItem(K_BUD, JSON.stringify(presupuestos));
     localStorage.setItem(K_INITIAL, saldoInicial);
     localStorage.setItem(K_CASH, efectivoCasa);
+    localStorage.setItem(K_AHORRO, JSON.stringify(ahorro));
     localStorage.setItem(K_CONCEPT_MAP, JSON.stringify(conceptMap));
     localStorage.setItem(K_SUBS, JSON.stringify(suscripciones));
     localStorage.setItem(K_THEME, theme);
@@ -2463,6 +2777,7 @@ function resetLocalDataToBlank(){
   presupuestos = [];
   saldoInicial = 0;
   efectivoCasa = 0;
+  ahorro = defaultAhorro();
   conceptMap = {};
   suscripciones = [];
   localStorage.setItem(K_MOV, JSON.stringify(movimientos));
@@ -2470,6 +2785,7 @@ function resetLocalDataToBlank(){
   localStorage.setItem(K_BUD, JSON.stringify(presupuestos));
   localStorage.setItem(K_INITIAL, saldoInicial);
   localStorage.setItem(K_CASH, efectivoCasa);
+  localStorage.setItem(K_AHORRO, JSON.stringify(ahorro));
   localStorage.setItem(K_CONCEPT_MAP, JSON.stringify(conceptMap));
   localStorage.setItem(K_SUBS, JSON.stringify(suscripciones));
   localStorage.setItem(K_LAST_EDIT, '0');
